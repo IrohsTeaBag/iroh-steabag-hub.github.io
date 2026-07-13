@@ -11,8 +11,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 // ---- 1. Paste your Supabase project details here after setup ----
-const SUPABASE_URL = "YOUR_SUPABASE_URL"; // e.g. "https://abcdefgh.supabase.co"
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://csrctjumjbqrijanmjww.supabase.co"; // e.g. "https://abcdefgh.supabase.co"
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcmN0anVtamJxcmlqYW5tand3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4NzA1NjEsImV4cCI6MjA5OTQ0NjU2MX0.25tZgWvd-jR4bGme62c3440UnjDenkfU8c9V2cp54yo";
 // -------------------------------------------------------------------
 
 const isConfigured =
