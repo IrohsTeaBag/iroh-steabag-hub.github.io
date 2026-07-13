@@ -473,7 +473,7 @@ function OwnerToggle({ ownerMode, setOwnerMode }) {
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider shrink-0"
         style={{ color: C.green, border: `1px solid ${C.green}44`, borderRadius: RADIUS }}
       >
-        <Unlock size={12} /> Owner mode
+        <Unlock size={12} /> <span className="hidden sm:inline">Owner mode</span>
       </button>
     );
   }
@@ -640,15 +640,15 @@ function Topbar({ query, setQuery, onNavigate, ownerMode, setOwnerMode, onMenuCl
       >
         <Menu size={16} />
       </button>
-      <div className="relative flex-1 max-w-md">
+      <div className="relative flex-1 min-w-0 max-w-md">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.faint }} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
-          placeholder="search index=projects OR index=skills ..."
-          className="w-full pl-9 pr-3 py-2 text-xs font-mono outline-none"
+          placeholder="search index=..."
+          className="w-full min-w-0 pl-9 pr-3 py-2 text-xs font-mono outline-none"
           style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS }}
         />
         {focused && results.length > 0 && (
@@ -950,13 +950,15 @@ function ProjectCard({ p, onOpen }) {
   return (
     <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }}>
       <button onClick={() => onOpen(p)} className="w-full text-left p-5 flex flex-col h-full">
-        <div className="h-24 mb-4 flex items-center justify-center relative" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+        <div className="h-24 mb-4 flex items-center justify-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
           {p.secondary ? <Cpu size={26} style={{ color: C.blue }} /> : <Server size={26} style={{ color: C.green }} />}
-          <div className="absolute top-2 right-2"><PriorityDot priority={p.priority} /></div>
         </div>
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
           <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: C.faint }}>{p.category}</span>
-          <span className="text-[10px] font-mono" style={{ color: C.faint }}>{p.date}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <PriorityDot priority={p.priority} />
+            <span className="text-[10px] font-mono" style={{ color: C.faint }}>{p.date}</span>
+          </div>
         </div>
         <h3 className="text-sm font-bold mb-2 leading-snug" style={{ color: C.text }}>{p.title}</h3>
         <p className="text-xs leading-relaxed mb-3 flex-1" style={{ color: C.dim }}>{p.description}</p>
@@ -965,9 +967,9 @@ function ProjectCard({ p, onOpen }) {
             <span key={t} className="text-[10px] font-mono px-2 py-0.5" style={{ background: C.panelAlt, color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>{t}</span>
           ))}
         </div>
-        <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+        <div className="flex items-center justify-between gap-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
           <StatusPill status={p.status} />
-          <span className="text-[11px] font-mono flex items-center gap-1" style={{ color: C.green }}>Open <ChevronRight size={12} /></span>
+          <span className="text-[11px] font-mono flex items-center gap-1 shrink-0" style={{ color: C.green }}>Open <ChevronRight size={12} /></span>
         </div>
       </button>
     </div>
