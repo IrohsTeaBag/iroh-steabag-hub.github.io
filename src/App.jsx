@@ -33,7 +33,7 @@ const RADIUS = 3;
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // headroom under the 5MB per-key storage limit
 
 /* ============================== DATA ============================== */
-const PROFILE = {
+const PROFILE_SEED = {
   name: "Tumiso K. Ngwako",
   title: "Cybersecurity Intern · Web AppSec & SOC",
   summary:
@@ -45,19 +45,19 @@ const PROFILE = {
   secondaryFocus: "OT / ICS Security",
 };
 
-const ABOUT_PARAGRAPHS = [
+const ABOUT_BIO_SEED = [
   "Final-year Computer Systems Engineering student at Tshwane University of Technology, currently completing Work-Integrated Learning as a Cybersecurity Intern. My focus is web application security and SOC operations: I use Burp Suite and OWASP Top 10 methodology to assess vulnerabilities like SQLi, XSS, and API security issues, and I work with Wazuh and Microsoft Sentinel for threat detection.",
   "I also have growing experience in OT/ICS security, working with Siemens S7-1200 PLCs and SCADA protocols. That side of my work draws on a solid engineering background, including hands-on electronics and embedded systems projects using PIC and ESP32 microcontrollers, Arduino, and PLC ladder logic, so I understand both the IT and industrial sides of the systems I'm securing.",
   "I'm comfortable working across C++, C#, Python, and Assembly, and I'm building toward a career in blue team work.",
 ];
 
-const PROFICIENCY = [
+const PROFICIENCY_SEED = [
   { label: "Web AppSec", sub: "Primary focus", value: 75, color: C.green },
   { label: "SOC / SIEM", sub: "Threat detection", value: 88, color: C.blue },
   { label: "OT / ICS", sub: "Secondary skills", value: 65, color: C.dim },
 ];
 
-const SKILL_GROUPS = [
+const SKILL_GROUPS_SEED = [
   {
     group: "Web / Application / SOC Security",
     tag: "Primary",
@@ -97,7 +97,7 @@ const SKILL_GROUPS = [
   },
 ];
 
-const PROJECTS = [
+const PROJECT_SEED = [
   {
     id: "mwr-webapp",
     title: "MWR CyberSec Internship: Web App Penetration Testing",
@@ -214,16 +214,22 @@ const CERT_SEED = [
   { name: "CompTIA Security+", desc: "Vendor-neutral security foundation.", status: "PLANNED", issued: null },
 ];
 
-const TRAINING = [
+const TRAINING_SEED = [
   { name: "Blue Teaming Path (Modules 1, 2 & 3)", desc: "Defensive security, threat hunting, and incident response.", status: "COMPLETE", issued: "2026" },
   { name: "SOC Analyst Training (Tier 1, 2 & 3)", desc: "Alert triage, investigation, and escalation procedures.", status: "COMPLETE", issued: "2026" },
   { name: "MWR CyberSec: Firefly CTF", desc: "TryHackMe capstone challenge covering web exploitation.", status: "COMPLETE", issued: "2026" },
 ];
 
-const TIMELINE = [
+const TIMELINE_SEED = [
   { kind: "Employment", when: "CURRENT", title: "Cybersecurity Intern — Work Integrated Learning (WIL)", desc: "Hands-on exposure to OT/ICS security on a multi-year SCADA modernisation project for critical infrastructure." },
   { kind: "Education", when: "2022 – 2026", title: "Computer Systems Engineering", desc: "Tshwane University of Technology (TUT) — with a growing focus on cybersecurity and industrial control systems." },
 ];
+
+const CONTACT_SEED = {
+  linkedin: "https://www.linkedin.com/in/ngwakotumiso",
+  github: "https://github.com/IrohsTeaBag",
+  email: "ngwakotumiso01@gmail.com",
+};
 
 const RADAR_DATA = [
   { subject: "Web AppSec", value: 75 },
@@ -245,12 +251,6 @@ const NAV_ITEMS = [
   { id: "about", label: "About", icon: UserIcon },
   { id: "resume", label: "CV", icon: Briefcase },
   { id: "contact", label: "Contact", icon: Mail },
-];
-
-const SEARCHABLE = [
-  ...PROJECTS.map((p) => ({ type: "Project", label: p.title, view: "projects" })),
-  ...CERT_SEED.map((c) => ({ type: "Certificate", label: c.name, view: "certificates" })),
-  ...SKILL_GROUPS.flatMap((g) => g.skills.map((s) => ({ type: "Skill", label: s.name, view: "skills" }))),
 ];
 
 /* Owner-only passcode gate. Client-side only — good enough to keep casual
@@ -314,6 +314,86 @@ function useStoredJSON(key, fallback) {
   };
 
   return [value, persist, loading];
+}
+
+/** Shared live project list — seeded once from PROJECT_SEED, then owner-editable.
+    Every component that needs "the current projects" (grid, dashboard stats,
+    activity feed, search) uses this so newly added projects show up everywhere. */
+function useProjects() {
+  const [stored, setStored, loading] = useStoredJSON("projects", null);
+
+  useEffect(() => {
+    if (!loading && stored === null) {
+      setStored(PROJECT_SEED);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, stored]);
+
+  const list = stored && stored.length ? stored : PROJECT_SEED;
+  return [list, setStored, loading];
+}
+
+/** Generic "seeded list" hook — used for anything that's a simple owner-editable
+    array seeded once from a starting constant (skills, timeline, credentials). */
+function useSeededList(key, seed) {
+  const [stored, setStored, loading] = useStoredJSON(key, null);
+  useEffect(() => {
+    if (!loading && stored === null) setStored(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, stored]);
+  const list = stored && stored.length ? stored : seed;
+  return [list, setStored, loading];
+}
+
+function useProfile() {
+  const [stored, setStored, loading] = useStoredJSON("profile-info", null);
+  useEffect(() => {
+    if (!loading && stored === null) setStored(PROFILE_SEED);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, stored]);
+  const value = stored || PROFILE_SEED;
+  return [value, setStored, loading];
+}
+
+function useAboutBio() {
+  const [stored, setStored, loading] = useStoredJSON("about-bio", null);
+  useEffect(() => {
+    if (!loading && stored === null) setStored(ABOUT_BIO_SEED);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, stored]);
+  const paragraphs = stored && stored.length ? stored : ABOUT_BIO_SEED;
+  return [paragraphs, setStored, loading];
+}
+
+function useSkillGroups() {
+  return useSeededList("skill-groups", SKILL_GROUPS_SEED);
+}
+
+function useProficiency() {
+  return useSeededList("proficiency", PROFICIENCY_SEED);
+}
+
+function useTimeline() {
+  return useSeededList("timeline", TIMELINE_SEED);
+}
+
+function useTraining() {
+  return useSeededList("training", TRAINING_SEED);
+}
+
+function useCertificates() {
+  const seeded = CERT_SEED.map((c, i) => ({ id: `seed-${i}`, credentialId: "", verifyUrl: "", fileDataUrl: null, fileName: null, ...c }));
+  return useSeededList("certificates", seeded);
+}
+
+function useContactInfo() {
+  const [stored, setStored, loading] = useStoredJSON("contact-info", null);
+  useEffect(() => {
+    if (!loading && stored === null) setStored(CONTACT_SEED);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, stored]);
+  const value = stored || CONTACT_SEED;
+  return [value, setStored, loading];
 }
 
 /* ============================== PRIMITIVES ============================== */
@@ -420,7 +500,7 @@ function ProfilePhoto({ size = 96, ownerMode }) {
         style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: RADIUS }}
       >
         {photo?.dataUrl ? (
-          <img src={photo.dataUrl} alt={PROFILE.name} className="w-full h-full object-cover" />
+          <img src={photo.dataUrl} alt="Profile" className="w-full h-full object-cover" />
         ) : (
           <span className="font-mono font-bold" style={{ color: C.dim, fontSize: size * 0.28 }}>TN</span>
         )}
@@ -625,10 +705,18 @@ function NotificationsBell() {
 /* ============================== TOPBAR ============================== */
 function Topbar({ query, setQuery, onNavigate, ownerMode, setOwnerMode, onMenuClick }) {
   const [focused, setFocused] = useState(false);
+  const [projects] = useProjects();
+  const [skillGroups] = useSkillGroups();
+  const [certs] = useCertificates();
   const results = useMemo(() => {
     if (!query.trim()) return [];
-    return SEARCHABLE.filter((s) => s.label.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
-  }, [query]);
+    const searchable = [
+      ...projects.map((p) => ({ type: "Project", label: p.title, view: "projects" })),
+      ...skillGroups.flatMap((g) => g.skills.map((s) => ({ type: "Skill", label: s.name, view: "skills" }))),
+      ...certs.map((c) => ({ type: "Certificate", label: c.name, view: "certificates" })),
+    ];
+    return searchable.filter((s) => s.label.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
+  }, [query, projects, skillGroups, certs]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 shrink-0 relative" style={{ height: 58, background: "#0D0E11", borderBottom: `1px solid ${C.border}` }}>
@@ -873,21 +961,72 @@ function ProjectCodeLink({ project, ownerMode }) {
   );
 }
 
+/* ============================== PROJECT THUMBNAIL (owner-uploadable) ============================== */
+function ProjectThumbnail({ project, ownerMode }) {
+  const [img, setImg] = useStoredJSON(`thumbnail:${project.id}`, null);
+  const inputRef = useRef(null);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) { alert("That image is too large. Please use a file under 4MB."); return; }
+    const dataUrl = await fileToDataURL(file);
+    setImg({ dataUrl });
+  }
+
+  return (
+    <div
+      className="relative h-40 flex items-end p-6 overflow-hidden"
+      style={{ background: img?.dataUrl ? "#000" : `linear-gradient(135deg, ${project.secondary ? C.purple : C.green}22, ${C.panel})` }}
+    >
+      {img?.dataUrl && (
+        <>
+          <img src={img.dataUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,.75), rgba(0,0,0,.15))" }} />
+        </>
+      )}
+      {ownerMode && (
+        <div className="absolute top-4 left-4 flex gap-2 z-10">
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+            style={{ background: "rgba(0,0,0,.6)", color: "#fff", borderRadius: RADIUS }}
+          >
+            <Upload size={11} /> {img?.dataUrl ? "Replace image" : "Add image"}
+          </button>
+          {img?.dataUrl && (
+            <button
+              onClick={() => setImg(null)}
+              className="p-1.5"
+              style={{ background: "rgba(0,0,0,.6)", color: C.red, borderRadius: RADIUS }}
+              title="Remove image"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: img?.dataUrl ? "#D8DEE6" : C.faint }}>{project.category}</span>
+          <PriorityDot priority={project.priority} />
+        </div>
+        <h2 className="text-xl font-bold" style={{ color: img?.dataUrl ? "#fff" : C.text }}>{project.title}</h2>
+      </div>
+    </div>
+  );
+}
+
 function ProjectDetail({ project, onClose, ownerMode }) {
   if (!project) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-10 px-4" style={{ background: "rgba(4,5,6,0.85)" }} onClick={onClose}>
       <div className="w-full max-w-3xl" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4 p-6" style={{ borderBottom: `1px solid ${C.border}`, background: C.panelAlt }}>
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: C.faint }}>{project.category}</span>
-              <PriorityDot priority={project.priority} />
-            </div>
-            <h2 className="text-xl font-bold" style={{ color: C.text }}>{project.title}</h2>
-          </div>
-          <button onClick={onClose} className="p-1.5 shrink-0" style={{ background: C.raised, borderRadius: RADIUS }}>
-            <X size={16} style={{ color: C.text }} />
+        <div className="relative" style={{ borderBottom: `1px solid ${C.border}` }}>
+          <ProjectThumbnail project={project} ownerMode={ownerMode} />
+          <button onClick={onClose} className="absolute top-4 right-4 p-1.5 shrink-0 z-10" style={{ background: "rgba(0,0,0,.6)", borderRadius: RADIUS }}>
+            <X size={16} style={{ color: "#fff" }} />
           </button>
         </div>
 
@@ -915,14 +1054,16 @@ function ProjectDetail({ project, onClose, ownerMode }) {
             </ul>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            {project.metrics.map((m, i) => (
-              <div key={i} className="p-3 text-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
-                <div className="text-xs font-bold" style={{ color: C.text }}>{m.value}</div>
-                <div className="text-[10px] mt-1" style={{ color: C.faint }}>{m.label}</div>
-              </div>
-            ))}
-          </div>
+          {project.metrics && project.metrics.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {project.metrics.map((m, i) => (
+                <div key={i} className="p-3 text-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+                  <div className="text-xs font-bold" style={{ color: C.text }}>{m.value}</div>
+                  <div className="text-[10px] mt-1" style={{ color: C.faint }}>{m.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div>
             <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Technologies Used</div>
@@ -946,12 +1087,29 @@ function ProjectDetail({ project, onClose, ownerMode }) {
 }
 
 /* ============================== PROJECTS ============================== */
-function ProjectCard({ p, onOpen }) {
+function ProjectCard({ p, onOpen, ownerMode, onDelete }) {
+  const [img] = useStoredJSON(`thumbnail:${p.id}`, null);
   return (
-    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }}>
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS, position: "relative" }}>
+      {ownerMode && onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
+          className="absolute top-3 right-3 p-1.5 z-10"
+          style={{ background: "rgba(0,0,0,.6)", color: C.red, borderRadius: RADIUS }}
+          title="Delete project"
+        >
+          <Trash2 size={13} />
+        </button>
+      )}
       <button onClick={() => onOpen(p)} className="w-full text-left p-5 flex flex-col h-full">
-        <div className="h-24 mb-4 flex items-center justify-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
-          {p.secondary ? <Cpu size={26} style={{ color: C.blue }} /> : <Server size={26} style={{ color: C.green }} />}
+        <div className="h-24 mb-4 flex items-center justify-center overflow-hidden" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+          {img?.dataUrl ? (
+            <img src={img.dataUrl} alt={p.title} className="w-full h-full object-cover" />
+          ) : p.secondary ? (
+            <Cpu size={26} style={{ color: C.blue }} />
+          ) : (
+            <Server size={26} style={{ color: C.green }} />
+          )}
         </div>
         <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
           <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: C.faint }}>{p.category}</span>
@@ -976,14 +1134,87 @@ function ProjectCard({ p, onOpen }) {
   );
 }
 
-function ProjectsPage({ onOpen }) {
+function ProjectsPage({ onOpen, ownerMode }) {
+  const [projects, setProjects] = useProjects();
   const [filter, setFilter] = useState("All");
-  const cats = ["All", ...new Set(PROJECTS.map((p) => p.category))];
-  const filtered = filter === "All" ? PROJECTS : PROJECTS.filter((p) => p.category === filter);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    title: "", category: "", date: "", priority: "Medium", status: "IN PROGRESS",
+    difficulty: "Intermediate", description: "", overview: "", tags: "", tech: "",
+    objectives: "", secondary: false,
+  });
+
+  const cats = ["All", ...new Set(projects.map((p) => p.category))];
+  const filtered = filter === "All" ? projects : projects.filter((p) => p.category === filter);
+
+  function addProject(e) {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+    const newProject = {
+      id: `project-${Date.now()}`,
+      title: form.title.trim(),
+      category: form.category.trim() || "Uncategorized",
+      date: form.date.trim() || new Date().toISOString().slice(0, 7),
+      priority: form.priority,
+      status: form.status,
+      difficulty: form.difficulty,
+      secondary: form.secondary,
+      description: form.description.trim(),
+      overview: form.overview.trim() || form.description.trim(),
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tech: form.tech.split(",").map((t) => t.trim()).filter(Boolean),
+      objectives: form.objectives.split("\n").map((t) => t.trim()).filter(Boolean),
+      metrics: [],
+    };
+    setProjects([...projects, newProject]);
+    setForm({ title: "", category: "", date: "", priority: "Medium", status: "IN PROGRESS", difficulty: "Intermediate", description: "", overview: "", tags: "", tech: "", objectives: "", secondary: false });
+    setShowForm(false);
+  }
+
+  function deleteProject(id) {
+    setProjects(projects.filter((p) => p.id !== id));
+  }
+
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
-      <SectionEyebrow n="04">Projects</SectionEyebrow>
+      <SectionEyebrow n="04" right={ownerMode && <Btn variant="primary" onClick={() => setShowForm((s) => !s)}><Plus size={12} /> Add project</Btn>}>
+        Projects
+      </SectionEyebrow>
+
+      {ownerMode && showForm && (
+        <Panel title="New project" className="mb-6">
+          <form onSubmit={addProject} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input required placeholder="Project title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Category, e.g. Web Application Security" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Date, e.g. 2026-07 or 2026 — ongoing" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+
+            <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+            </select>
+            <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option>IN PROGRESS</option><option>RESOLVED</option>
+            </select>
+            <select value={form.difficulty} onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+            </select>
+            <label className="flex items-center gap-2 text-xs" style={{ color: C.dim }}>
+              <input type="checkbox" checked={form.secondary} onChange={(e) => setForm((f) => ({ ...f, secondary: e.target.checked }))} />
+              OT / ICS project (secondary focus styling)
+            </label>
+
+            <textarea placeholder="Short description (shown on the card)" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <textarea placeholder="Overview (shown on the detail page — leave blank to reuse the description)" rows={2} value={form.overview} onChange={(e) => setForm((f) => ({ ...f, overview: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <textarea placeholder={"Objectives — one per line"} rows={3} value={form.objectives} onChange={(e) => setForm((f) => ({ ...f, objectives: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <input placeholder="Tags, comma separated" value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Technologies, comma separated" value={form.tech} onChange={(e) => setForm((f) => ({ ...f, tech: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+
+            <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save project</Btn>
+          </form>
+        </Panel>
+      )}
+
       <div className="flex flex-wrap gap-2 mb-6">
         {cats.map((c) => (
           <button
@@ -1002,7 +1233,7 @@ function ProjectsPage({ onOpen }) {
         ))}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map((p) => <ProjectCard key={p.id} p={p} onOpen={onOpen} />)}
+        {filtered.map((p) => <ProjectCard key={p.id} p={p} onOpen={onOpen} ownerMode={ownerMode} onDelete={deleteProject} />)}
       </div>
     </div>
   );
@@ -1080,80 +1311,71 @@ function CertCard({ c, ownerMode, onDelete, onAttach, onRemoveFile }) {
   );
 }
 
-function CertificatesPage({ ownerMode }) {
-  const [certs, setCerts, loading] = useStoredJSON("certificates", null);
+function CredentialSection({ n, title, credKey, useHook, ownerMode }) {
+  const [list, setList, loading] = useHook();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", desc: "", status: "COMPLETE", issued: "", credentialId: "", verifyUrl: "" });
 
-  useEffect(() => {
-    if (!loading && certs === null) {
-      setCerts(CERT_SEED.map((c, i) => ({ id: `seed-${i}`, credentialId: "", verifyUrl: "", fileDataUrl: null, fileName: null, ...c })));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, certs]);
-
-  const list = certs || [];
-
-  function addCert(e) {
+  function addItem(e) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    setCerts([...list, { id: `${Date.now()}`, createdAt: Date.now(), fileDataUrl: null, fileName: null, ...form }]);
+    setList([...list, { id: `${Date.now()}`, createdAt: Date.now(), fileDataUrl: null, fileName: null, ...form }]);
     setForm({ name: "", desc: "", status: "COMPLETE", issued: "", credentialId: "", verifyUrl: "" });
     setShowForm(false);
   }
-  function removeCert(id) { setCerts(list.filter((c) => c.id !== id)); }
+  function removeItem(id) { setList(list.filter((c) => c.id !== id)); }
   async function attachFile(id, file) {
     if (file.size > MAX_UPLOAD_BYTES) { alert("That file is too large. Please use a file under 4MB."); return; }
     const dataUrl = await fileToDataURL(file);
-    setCerts(list.map((c) => (c.id === id ? { ...c, fileDataUrl: dataUrl, fileName: file.name } : c)));
+    setList(list.map((c) => (c.id === id ? { ...c, fileDataUrl: dataUrl, fileName: file.name } : c)));
   }
   function removeFile(id) {
-    setCerts(list.map((c) => (c.id === id ? { ...c, fileDataUrl: null, fileName: null } : c)));
+    setList(list.map((c) => (c.id === id ? { ...c, fileDataUrl: null, fileName: null } : c)));
   }
 
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-10">
-      <div>
-        <SectionEyebrow n="06" right={ownerMode && <Btn variant="primary" onClick={() => setShowForm((s) => !s)}><Plus size={12} /> Add certificate</Btn>}>
-          Certifications
-        </SectionEyebrow>
+    <div>
+      <SectionEyebrow n={n} right={ownerMode && <Btn variant="primary" onClick={() => setShowForm((s) => !s)}><Plus size={12} /> Add {title.toLowerCase().replace(/&.*/, "").trim()}</Btn>}>
+        {title}
+      </SectionEyebrow>
 
-        {ownerMode && showForm && (
-          <Panel title="New certificate" className="mb-6">
-            <form onSubmit={addCert} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input required placeholder="Certificate name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
-              <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
-                <option>COMPLETE</option>
-                <option>PLANNED</option>
-              </select>
-              <input placeholder="Issued (e.g. 2026)" value={form.issued} onChange={(e) => setForm((f) => ({ ...f, issued: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
-              <input placeholder="Credential ID (optional)" value={form.credentialId} onChange={(e) => setForm((f) => ({ ...f, credentialId: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
-              <input placeholder="Verification link (optional)" value={form.verifyUrl} onChange={(e) => setForm((f) => ({ ...f, verifyUrl: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
-              <textarea placeholder="Short description" rows={2} value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
-              <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save certificate</Btn>
-            </form>
-          </Panel>
-        )}
+      {ownerMode && showForm && (
+        <Panel title={`New ${credKey}`} className="mb-6">
+          <form onSubmit={addItem} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input required placeholder="Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option>COMPLETE</option>
+              <option>PLANNED</option>
+            </select>
+            <input placeholder="Issued / completed (e.g. 2026)" value={form.issued} onChange={(e) => setForm((f) => ({ ...f, issued: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Credential ID (optional)" value={form.credentialId} onChange={(e) => setForm((f) => ({ ...f, credentialId: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Verification link (optional)" value={form.verifyUrl} onChange={(e) => setForm((f) => ({ ...f, verifyUrl: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <textarea placeholder="Short description" rows={2} value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save</Btn>
+          </form>
+        </Panel>
+      )}
 
-        {loading ? (
-          <div className="text-xs" style={{ color: C.faint }}>Loading certificates…</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {list.map((c) => (
-              <CertCard key={c.id} c={c} ownerMode={ownerMode} onDelete={() => removeCert(c.id)} onAttach={(f) => attachFile(c.id, f)} onRemoveFile={() => removeFile(c.id)} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <SectionEyebrow n="—">Training &amp; Self-Study</SectionEyebrow>
+      {loading ? (
+        <div className="text-xs" style={{ color: C.faint }}>Loading…</div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {TRAINING.map((c, i) => <CertCard key={i} c={{ ...c, id: `t-${i}` }} ownerMode={false} />)}
+          {list.map((c) => (
+            <CertCard key={c.id} c={c} ownerMode={ownerMode} onDelete={() => removeItem(c.id)} onAttach={(f) => attachFile(c.id, f)} onRemoveFile={() => removeFile(c.id)} />
+          ))}
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+function CertificatesPage({ ownerMode }) {
+  return (
+    <div className="p-4 sm:p-6 md:p-8 space-y-10">
+      <CredentialSection n="06" title="Certifications" credKey="certificate" useHook={useCertificates} ownerMode={ownerMode} />
+      <CredentialSection n="—" title="Training & Self-Study" credKey="training entry" useHook={useTraining} ownerMode={ownerMode} />
     </div>
   );
 }
@@ -1197,6 +1419,11 @@ function CVManager({ ownerMode }) {
 }
 
 function ResumePage({ ownerMode }) {
+  const [timeline] = useTimeline();
+  const [skillGroups] = useSkillGroups();
+  const [certs] = useCertificates();
+  const [training] = useTraining();
+
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6">
       <SectionEyebrow n="—">CV</SectionEyebrow>
@@ -1205,8 +1432,8 @@ function ResumePage({ ownerMode }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Panel title="Experience">
-          {TIMELINE.filter((t) => t.kind === "Employment").map((t, i) => (
-            <div key={i}>
+          {timeline.filter((t) => t.kind === "Employment").map((t, i) => (
+            <div key={i} className="mb-3 last:mb-0">
               <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: C.green, border: `1px solid ${C.green}33`, borderRadius: RADIUS }}>{t.when}</span>
               <div className="text-sm font-bold mt-2" style={{ color: C.text }}>{t.title}</div>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: C.dim }}>{t.desc}</p>
@@ -1215,8 +1442,8 @@ function ResumePage({ ownerMode }) {
         </Panel>
 
         <Panel title="Education">
-          {TIMELINE.filter((t) => t.kind === "Education").map((t, i) => (
-            <div key={i}>
+          {timeline.filter((t) => t.kind === "Education").map((t, i) => (
+            <div key={i} className="mb-3 last:mb-0">
               <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: C.blue, border: `1px solid ${C.blue}33`, borderRadius: RADIUS }}>{t.when}</span>
               <div className="text-sm font-bold mt-2" style={{ color: C.text }}>{t.title}</div>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: C.dim }}>{t.desc}</p>
@@ -1227,7 +1454,7 @@ function ResumePage({ ownerMode }) {
 
       <Panel title="Skills Summary">
         <div className="flex flex-wrap gap-2">
-          {SKILL_GROUPS.flatMap((g) => g.skills).map((s) => (
+          {skillGroups.flatMap((g) => g.skills).map((s) => (
             <span key={s.name} className="text-xs px-3 py-1.5" style={{ border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS }}>{s.name}</span>
           ))}
         </div>
@@ -1235,7 +1462,7 @@ function ResumePage({ ownerMode }) {
 
       <Panel title="Achievements">
         <ul className="space-y-2">
-          {[...CERT_SEED, ...TRAINING].filter((c) => c.status === "COMPLETE").map((c, i) => (
+          {[...certs, ...training].filter((c) => c.status === "COMPLETE").map((c, i) => (
             <li key={i} className="flex items-center gap-2 text-sm" style={{ color: C.text }}>
               <ShieldCheck size={14} style={{ color: C.green }} /> {c.name}
             </li>
@@ -1250,91 +1477,382 @@ function ResumePage({ ownerMode }) {
   );
 }
 
-/* ============================== SKILLS ============================== */
-function SkillsPage() {
-  return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-10">
-      <SectionEyebrow n="02">Skills</SectionEyebrow>
-      {SKILL_GROUPS.map((g, gi) => (
-        <div key={gi}>
-          <div className="flex items-center gap-3 mb-4">
-            <h3 className="text-sm font-bold" style={{ color: C.text }}>{g.group}</h3>
-            <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: g.color, border: `1px solid ${g.color}33`, borderRadius: RADIUS }}>{g.tag}</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {g.skills.map((s) => (
-              <div key={s.name} className="p-4" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }}>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-semibold" style={{ color: C.text }}>{s.name}</span>
-                  <span className="text-xs font-mono" style={{ color: g.color }}>{s.level}%</span>
-                </div>
-                <div className="text-[11px] mb-2" style={{ color: C.faint }}>{s.detail}</div>
-                <div className="h-1.5 overflow-hidden" style={{ background: C.borderSoft, borderRadius: RADIUS }}>
-                  <div className="h-full" style={{ width: `${s.level}%`, background: g.color }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+function SkillCard({ skill, color, ownerMode, onUpdate, onDelete }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(skill);
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
 
-      <Panel title="Proficiency Overview">
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={PROFICIENCY}>
-            <CartesianGrid stroke={C.borderSoft} vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: C.faint, fontSize: 11 }} axisLine={{ stroke: C.border }} tickLine={false} />
-            <YAxis tick={{ fill: C.faint, fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: RADIUS }} />
-            <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-              {PROFICIENCY.map((p, i) => <Cell key={i} fill={p.color} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </Panel>
+  function save(e) {
+    e.preventDefault();
+    onUpdate({ name: form.name.trim() || skill.name, detail: form.detail, level: Math.max(0, Math.min(100, Number(form.level) || 0)) });
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <form onSubmit={save} className="p-4 space-y-2" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }}>
+        <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Skill name" className="w-full px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+        <input value={form.detail} onChange={(e) => setForm((f) => ({ ...f, detail: e.target.value }))} placeholder="Detail" className="w-full px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+        <input type="number" min="0" max="100" value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))} placeholder="Level %" className="w-full px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+        <div className="flex gap-2">
+          <Btn variant="primary" type="submit">Save</Btn>
+          <Btn variant="ghost" type="button" onClick={() => setEditing(false)}>Cancel</Btn>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="p-4 relative" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }}>
+      {ownerMode && (
+        <div className="absolute top-2 right-2 flex gap-1">
+          <button onClick={() => { setForm(skill); setEditing(true); }} className="text-[10px] font-mono px-1.5 py-0.5" style={{ color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>Edit</button>
+          <button onClick={onDelete} className="p-1" style={{ color: C.red }} title="Delete skill"><Trash2 size={12} /></button>
+        </div>
+      )}
+      <div className="flex justify-between items-center mb-1 pr-14">
+        <span className="text-sm font-semibold" style={{ color: C.text }}>{skill.name}</span>
+        <span className="text-xs font-mono shrink-0" style={{ color }}>{skill.level}%</span>
+      </div>
+      <div className="text-[11px] mb-2" style={{ color: C.faint }}>{skill.detail}</div>
+      <div className="h-1.5 overflow-hidden" style={{ background: C.borderSoft, borderRadius: RADIUS }}>
+        <div className="h-full" style={{ width: `${skill.level}%`, background: color }} />
+      </div>
     </div>
   );
 }
 
+function SkillGroupSection({ group, ownerMode, onAddSkill, onUpdateSkill, onDeleteSkill, onDeleteGroup }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", detail: "", level: 60 });
+  const inputStyle = { background: C.panel, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function submit(e) {
+    e.preventDefault();
+    if (!form.name.trim()) return;
+    onAddSkill({ name: form.name.trim(), detail: form.detail.trim(), level: Math.max(0, Math.min(100, Number(form.level) || 0)) });
+    setForm({ name: "", detail: "", level: 60 });
+    setShowAdd(false);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <h3 className="text-sm font-bold" style={{ color: C.text }}>{group.group}</h3>
+        <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: group.color, border: `1px solid ${group.color}33`, borderRadius: RADIUS }}>{group.tag}</span>
+        {ownerMode && (
+          <div className="flex gap-2 ml-auto">
+            <Btn variant="ghost" onClick={() => setShowAdd((s) => !s)}><Plus size={11} /> Add skill</Btn>
+            <Btn variant="danger" onClick={onDeleteGroup}><Trash2 size={11} /> Delete group</Btn>
+          </div>
+        )}
+      </div>
+
+      {ownerMode && showAdd && (
+        <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4 p-3" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+          <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Skill name" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+          <input value={form.detail} onChange={(e) => setForm((f) => ({ ...f, detail: e.target.value }))} placeholder="Detail" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+          <input type="number" min="0" max="100" value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))} placeholder="Level %" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+          <Btn variant="primary" type="submit">Add</Btn>
+        </form>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {group.skills.map((s, si) => (
+          <SkillCard
+            key={s.name + si}
+            skill={s}
+            color={group.color}
+            ownerMode={ownerMode}
+            onUpdate={(updated) => onUpdateSkill(si, updated)}
+            onDelete={() => onDeleteSkill(si)}
+          />
+        ))}
+        {group.skills.length === 0 && <div className="text-xs" style={{ color: C.faint }}>No skills in this group yet.</div>}
+      </div>
+    </div>
+  );
+}
+
+function ProficiencyEditor({ ownerMode }) {
+  const [proficiency, setProficiency] = useProficiency();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(null);
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function startEdit() {
+    setForm(proficiency.map((p) => ({ ...p })));
+    setEditing(true);
+  }
+  function save(e) {
+    e.preventDefault();
+    setProficiency(form.map((p) => ({ ...p, value: Math.max(0, Math.min(100, Number(p.value) || 0)) })));
+    setEditing(false);
+  }
+  function updateField(i, field, value) {
+    setForm((f) => f.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)));
+  }
+
+  if (!ownerMode) return null;
+
+  return (
+    <div className="mb-4">
+      <Btn variant="ghost" onClick={() => (editing ? setEditing(false) : startEdit())}>{editing ? "Cancel" : "Edit proficiency metrics"}</Btn>
+      {editing && form && (
+        <form onSubmit={save} className="mt-3 space-y-2">
+          {form.map((p, i) => (
+            <div key={i} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input value={p.label} onChange={(e) => updateField(i, "label", e.target.value)} placeholder="Label" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+              <input value={p.sub} onChange={(e) => updateField(i, "sub", e.target.value)} placeholder="Subtitle" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+              <input type="number" min="0" max="100" value={p.value} onChange={(e) => updateField(i, "value", e.target.value)} placeholder="Value %" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+            </div>
+          ))}
+          <Btn variant="primary" type="submit">Save metrics</Btn>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/* ============================== SKILLS ============================== */
+function SkillsPage({ ownerMode }) {
+  const [groups, setGroups] = useSkillGroups();
+  const [proficiency] = useProficiency();
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupForm, setGroupForm] = useState({ group: "", tag: "Custom", colorKey: "green" });
+  const colorOptions = { green: C.green, blue: C.blue, dim: C.dim };
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function addGroup(e) {
+    e.preventDefault();
+    if (!groupForm.group.trim()) return;
+    setGroups([...groups, { group: groupForm.group.trim(), tag: groupForm.tag.trim() || "Custom", color: colorOptions[groupForm.colorKey], skills: [] }]);
+    setGroupForm({ group: "", tag: "Custom", colorKey: "green" });
+    setShowGroupForm(false);
+  }
+  function deleteGroup(gi) { setGroups(groups.filter((_, i) => i !== gi)); }
+  function addSkill(gi, skill) { setGroups(groups.map((g, i) => (i === gi ? { ...g, skills: [...g.skills, skill] } : g))); }
+  function updateSkill(gi, si, updated) { setGroups(groups.map((g, i) => (i === gi ? { ...g, skills: g.skills.map((s, j) => (j === si ? updated : s)) } : g))); }
+  function deleteSkill(gi, si) { setGroups(groups.map((g, i) => (i === gi ? { ...g, skills: g.skills.filter((_, j) => j !== si) } : g))); }
+
+  return (
+    <div className="p-4 sm:p-6 md:p-8 space-y-10">
+      <SectionEyebrow n="02" right={ownerMode && <Btn variant="primary" onClick={() => setShowGroupForm((s) => !s)}><Plus size={12} /> Add skill group</Btn>}>
+        Skills
+      </SectionEyebrow>
+
+      {ownerMode && showGroupForm && (
+        <Panel title="New skill group">
+          <form onSubmit={addGroup} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input required placeholder="Group name" value={groupForm.group} onChange={(e) => setGroupForm((f) => ({ ...f, group: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input placeholder="Tag, e.g. Primary / Secondary" value={groupForm.tag} onChange={(e) => setGroupForm((f) => ({ ...f, tag: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <select value={groupForm.colorKey} onChange={(e) => setGroupForm((f) => ({ ...f, colorKey: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option value="green">Green accent</option>
+              <option value="blue">Blue accent</option>
+              <option value="dim">Neutral</option>
+            </select>
+            <Btn variant="primary" type="submit" className="md:col-span-3 justify-center">Save group</Btn>
+          </form>
+        </Panel>
+      )}
+
+      {groups.map((g, gi) => (
+        <SkillGroupSection
+          key={g.group + gi}
+          group={g}
+          ownerMode={ownerMode}
+          onAddSkill={(skill) => addSkill(gi, skill)}
+          onUpdateSkill={(si, updated) => updateSkill(gi, si, updated)}
+          onDeleteSkill={(si) => deleteSkill(gi, si)}
+          onDeleteGroup={() => deleteGroup(gi)}
+        />
+      ))}
+
+      <div>
+        <ProficiencyEditor ownerMode={ownerMode} />
+        <Panel title="Proficiency Overview">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={proficiency}>
+              <CartesianGrid stroke={C.borderSoft} vertical={false} />
+              <XAxis dataKey="label" tick={{ fill: C.faint, fontSize: 11 }} axisLine={{ stroke: C.border }} tickLine={false} />
+              <YAxis tick={{ fill: C.faint, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: RADIUS }} />
+              <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+                {proficiency.map((p, i) => <Cell key={i} fill={p.color} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function TimelineEntry({ entry, ownerMode, onUpdate, onDelete }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(entry);
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function save(e) {
+    e.preventDefault();
+    onUpdate(form);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <Panel title="Edit entry">
+        <form onSubmit={save} className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <select value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))} className="px-2 py-1.5 text-xs outline-none" style={inputStyle}>
+              <option>Employment</option>
+              <option>Education</option>
+            </select>
+            <input value={form.when} onChange={(e) => setForm((f) => ({ ...f, when: e.target.value }))} placeholder="When, e.g. CURRENT or 2022 – 2026" className="px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+          </div>
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Title" className="w-full px-2 py-1.5 text-xs outline-none" style={inputStyle} />
+          <textarea value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} placeholder="Description" rows={2} className="w-full px-2 py-1.5 text-xs outline-none resize-none" style={inputStyle} />
+          <div className="flex gap-2">
+            <Btn variant="primary" type="submit">Save</Btn>
+            <Btn variant="ghost" type="button" onClick={() => setEditing(false)}>Cancel</Btn>
+          </div>
+        </form>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel title={entry.kind} right={ownerMode && (
+      <div className="flex items-center gap-2">
+        <button onClick={() => { setForm(entry); setEditing(true); }} className="text-[10px] font-mono px-1.5 py-0.5" style={{ color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>Edit</button>
+        <button onClick={onDelete} style={{ color: C.red }} title="Delete entry"><Trash2 size={13} /></button>
+      </div>
+    )}>
+      <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: C.green, border: `1px solid ${C.green}33`, borderRadius: RADIUS }}>{entry.when}</span>
+      <h3 className="text-sm font-bold mt-2 mb-1.5" style={{ color: C.text }}>{entry.title}</h3>
+      <p className="text-xs leading-relaxed" style={{ color: C.dim }}>{entry.desc}</p>
+    </Panel>
+  );
+}
+
 /* ============================== EXPERIENCE / TIMELINE ============================== */
-function ExperiencePage() {
+function ExperiencePage({ ownerMode }) {
+  const [timeline, setTimeline] = useTimeline();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ kind: "Employment", when: "", title: "", desc: "" });
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function addEntry(e) {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+    setTimeline([...timeline, { ...form }]);
+    setForm({ kind: "Employment", when: "", title: "", desc: "" });
+    setShowForm(false);
+  }
+  function updateEntry(i, updated) { setTimeline(timeline.map((t, idx) => (idx === i ? updated : t))); }
+  function deleteEntry(i) { setTimeline(timeline.filter((_, idx) => idx !== i)); }
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
-      <SectionEyebrow n="05">Timeline</SectionEyebrow>
+      <SectionEyebrow n="05" right={ownerMode && <Btn variant="primary" onClick={() => setShowForm((s) => !s)}><Plus size={12} /> Add entry</Btn>}>
+        Timeline
+      </SectionEyebrow>
+
+      {ownerMode && showForm && (
+        <Panel title="New timeline entry" className="mb-6">
+          <form onSubmit={addEntry} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <select value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+              <option>Employment</option>
+              <option>Education</option>
+            </select>
+            <input placeholder="When, e.g. CURRENT or 2024 – 2026" value={form.when} onChange={(e) => setForm((f) => ({ ...f, when: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input required placeholder="Title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <textarea placeholder="Description" rows={2} value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save entry</Btn>
+          </form>
+        </Panel>
+      )}
+
       <div className="relative pl-8">
         <div className="absolute left-[7px] top-2 bottom-2 w-px" style={{ background: C.border }} />
-        {TIMELINE.map((t, i) => (
+        {timeline.map((t, i) => (
           <div key={i} className="relative mb-6 last:mb-0">
             <div className="absolute -left-8 top-1 h-3 w-3" style={{ background: t.kind === "Employment" ? C.green : C.blue, borderRadius: RADIUS }} />
-            <Panel>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: C.faint }}>{t.kind}</span>
-                <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: C.green, border: `1px solid ${C.green}33`, borderRadius: RADIUS }}>{t.when}</span>
-              </div>
-              <h3 className="text-sm font-bold mb-1.5" style={{ color: C.text }}>{t.title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: C.dim }}>{t.desc}</p>
-            </Panel>
+            <TimelineEntry entry={t} ownerMode={ownerMode} onUpdate={(u) => updateEntry(i, u)} onDelete={() => deleteEntry(i)} />
           </div>
         ))}
+        {timeline.length === 0 && <div className="text-xs" style={{ color: C.faint }}>No timeline entries yet.</div>}
       </div>
     </div>
   );
 }
 
 /* ============================== ABOUT ============================== */
+function ProfileBioEditor({ ownerMode }) {
+  const [profile, setProfile] = useProfile();
+  const [bio, setBio] = useAboutBio();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(null);
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function startEdit() {
+    setForm({ ...profile, bioText: bio.join("\n\n") });
+    setEditing(true);
+  }
+  function save(e) {
+    e.preventDefault();
+    const { bioText, ...profileFields } = form;
+    setProfile(profileFields);
+    const paragraphs = bioText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    setBio(paragraphs.length ? paragraphs : ABOUT_BIO_SEED);
+    setEditing(false);
+  }
+
+  if (!ownerMode) return null;
+
+  return (
+    <div className="mb-6">
+      <Btn variant="primary" onClick={() => (editing ? setEditing(false) : startEdit())}>
+        {editing ? "Cancel" : <><Upload size={12} /> Edit profile &amp; about</>}
+      </Btn>
+      {editing && form && (
+        <Panel title="Edit profile & about" className="mt-3">
+          <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Title" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Location" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} placeholder="Status" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.education} onChange={(e) => setForm((f) => ({ ...f, education: e.target.value }))} placeholder="Education" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.focus} onChange={(e) => setForm((f) => ({ ...f, focus: e.target.value }))} placeholder="Focus" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.secondaryFocus} onChange={(e) => setForm((f) => ({ ...f, secondaryFocus: e.target.value }))} placeholder="Secondary focus" className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <textarea value={form.summary} onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))} placeholder="Short summary (shown on the Dashboard header)" rows={2} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <textarea value={form.bioText} onChange={(e) => setForm((f) => ({ ...f, bioText: e.target.value }))} placeholder="About bio — separate paragraphs with a blank line" rows={7} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+            <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save changes</Btn>
+          </form>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/* ============================== ABOUT ============================== */
 function AboutPage({ ownerMode }) {
+  const [profile] = useProfile();
+  const [bio] = useAboutBio();
   const infoCards = [
-    { label: "Focus", value: PROFILE.focus, icon: ShieldAlert },
-    { label: "Secondary Focus", value: PROFILE.secondaryFocus, icon: Cpu },
-    { label: "Education", value: PROFILE.education, icon: GraduationCap },
-    { label: "Location", value: PROFILE.location, icon: MapPin },
-    { label: "Status", value: PROFILE.status, icon: Zap },
+    { label: "Focus", value: profile.focus, icon: ShieldAlert },
+    { label: "Secondary Focus", value: profile.secondaryFocus, icon: Cpu },
+    { label: "Education", value: profile.education, icon: GraduationCap },
+    { label: "Location", value: profile.location, icon: MapPin },
+    { label: "Status", value: profile.status, icon: Zap },
   ];
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <SectionEyebrow n="01">About</SectionEyebrow>
+      <ProfileBioEditor ownerMode={ownerMode} />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          {ABOUT_PARAGRAPHS.map((p, i) => (
+          {bio.map((p, i) => (
             <p key={i} className="text-sm leading-relaxed" style={{ color: C.dim }}>{p}</p>
           ))}
         </div>
@@ -1343,8 +1861,8 @@ function AboutPage({ ownerMode }) {
             <div className="flex items-center gap-3">
               <ProfilePhoto size={56} ownerMode={ownerMode} />
               <div>
-                <div className="text-sm font-bold" style={{ color: C.text }}>{PROFILE.name}</div>
-                <div className="text-[11px]" style={{ color: C.faint }}>{PROFILE.title}</div>
+                <div className="text-sm font-bold" style={{ color: C.text }}>{profile.name}</div>
+                <div className="text-[11px]" style={{ color: C.faint }}>{profile.title}</div>
               </div>
             </div>
           </Panel>
@@ -1367,18 +1885,48 @@ function AboutPage({ ownerMode }) {
 }
 
 /* ============================== CONTACT ============================== */
-function ContactPage() {
+function ContactPage({ ownerMode }) {
   const [sent, setSent] = useState(false);
-  const links = [
-    { label: "LinkedIn", icon: Linkedin, value: "linkedin.com/in/ngwakotumiso", href: "https://www.linkedin.com/in/ngwakotumiso" },
-    { label: "GitHub", icon: Github, value: "github.com/IrohsTeaBag", href: "https://github.com/IrohsTeaBag" },
-    { label: "Email", icon: Mail, value: "ngwakotumiso01@gmail.com", href: "mailto:ngwakotumiso01@gmail.com" },
-    { label: "Location", icon: MapPin, value: PROFILE.location },
-  ];
+  const [contact, setContact] = useContactInfo();
+  const [profile] = useProfile();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(null);
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function startEdit() {
+    setForm({ ...contact });
+    setEditing(true);
+  }
+  function saveContact(e) {
+    e.preventDefault();
+    setContact(form);
+    setEditing(false);
+  }
+
+  const links = [
+    { label: "LinkedIn", icon: Linkedin, value: contact.linkedin.replace(/^https?:\/\//, ""), href: contact.linkedin },
+    { label: "GitHub", icon: Github, value: contact.github.replace(/^https?:\/\//, ""), href: contact.github },
+    { label: "Email", icon: Mail, value: contact.email, href: `mailto:${contact.email}` },
+    { label: "Location", icon: MapPin, value: profile.location },
+  ];
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
-      <SectionEyebrow n="—">Contact</SectionEyebrow>
+      <SectionEyebrow n="—" right={ownerMode && <Btn variant="primary" onClick={() => (editing ? setEditing(false) : startEdit())}>{editing ? "Cancel" : "Edit contact info"}</Btn>}>
+        Contact
+      </SectionEyebrow>
+
+      {ownerMode && editing && form && (
+        <Panel title="Edit contact info" className="mb-6">
+          <form onSubmit={saveContact} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input value={form.linkedin} onChange={(e) => setForm((f) => ({ ...f, linkedin: e.target.value }))} placeholder="LinkedIn URL" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.github} onChange={(e) => setForm((f) => ({ ...f, github: e.target.value }))} placeholder="GitHub URL" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="Email address" className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+            <Btn variant="primary" type="submit" className="md:col-span-2 justify-center">Save contact info</Btn>
+          </form>
+        </Panel>
+      )}
+
       <Panel className="mb-6">
         <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>Let's talk security.</h2>
         <p className="text-sm max-w-xl" style={{ color: C.dim }}>
@@ -1452,6 +2000,8 @@ function ContactPage() {
     invented numbers — months with nothing real that happened show zero. */
 function useActivitySeries() {
   const [buckets, setBuckets] = useState(null); // null = still loading
+  const [projects] = useProjects();
+  const idsKey = projects.map((p) => p.id).join(",");
 
   useEffect(() => {
     let cancelled = false;
@@ -1466,7 +2016,7 @@ function useActivitySeries() {
       };
 
       // Real project start months, e.g. "2026-05"
-      PROJECTS.forEach((p) => {
+      projects.forEach((p) => {
         const m = /^(\d{4})-(\d{2})$/.exec(p.date);
         if (m) bump(`${m[1]}-${m[2]}-01`);
       });
@@ -1479,7 +2029,7 @@ function useActivitySeries() {
       } catch { /* none yet */ }
 
       // Videos and reports attached per project
-      for (const p of PROJECTS) {
+      for (const p of projects) {
         try {
           const vres = await window.storage.get(`videos:${p.id}`, true);
           const vids = vres ? JSON.parse(vres.value) : [];
@@ -1511,7 +2061,8 @@ function useActivitySeries() {
       setBuckets(series);
     })();
     return () => { cancelled = true; };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
 
   return buckets;
 }
@@ -1519,9 +2070,15 @@ function useActivitySeries() {
 /* ============================== DASHBOARD ============================== */
 function Dashboard({ navigate, ownerMode }) {
   const activity = useActivitySeries();
-  const projectsDone = PROJECTS.filter((p) => p.status === "RESOLVED").length;
-  const cProj = useCountUp(PROJECTS.length);
-  const cCerts = useCountUp(CERT_SEED.filter((c) => c.status === "COMPLETE").length + TRAINING.length);
+  const [projects] = useProjects();
+  const [profile] = useProfile();
+  const [bio] = useAboutBio();
+  const [proficiency] = useProficiency();
+  const [certs] = useCertificates();
+  const [training] = useTraining();
+  const projectsDone = projects.filter((p) => p.status === "RESOLVED").length;
+  const cProj = useCountUp(projects.length);
+  const cCerts = useCountUp(certs.filter((c) => c.status === "COMPLETE").length + training.length);
   const cResolved = useCountUp(projectsDone);
   const cTools = useCountUp(19);
 
@@ -1542,10 +2099,10 @@ function Dashboard({ navigate, ownerMode }) {
             <div>
               <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest mb-2" style={{ color: C.green }}>
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: C.green }} />
-                {PROFILE.title}
+                {profile.title}
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2" style={{ color: C.text }}>{PROFILE.name}</h1>
-              <p className="max-w-xl text-xs leading-relaxed" style={{ color: C.dim }}>{PROFILE.summary}</p>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2" style={{ color: C.text }}>{profile.name}</h1>
+              <p className="max-w-xl text-xs leading-relaxed" style={{ color: C.dim }}>{profile.summary}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
@@ -1560,18 +2117,18 @@ function Dashboard({ navigate, ownerMode }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Panel title="About" className="lg:col-span-2">
           <div className="space-y-3">
-            {ABOUT_PARAGRAPHS.map((p, i) => (
+            {bio.map((p, i) => (
               <p key={i} className="text-xs leading-relaxed" style={{ color: C.dim }}>{p}</p>
             ))}
           </div>
         </Panel>
         <Panel title="Profile" padded={false}>
           {[
-            { label: "Focus", value: PROFILE.focus, icon: ShieldAlert },
-            { label: "Secondary Focus", value: PROFILE.secondaryFocus, icon: Cpu },
-            { label: "Education", value: PROFILE.education, icon: GraduationCap },
-            { label: "Location", value: PROFILE.location, icon: MapPin },
-            { label: "Status", value: PROFILE.status, icon: Zap },
+            { label: "Focus", value: profile.focus, icon: ShieldAlert },
+            { label: "Secondary Focus", value: profile.secondaryFocus, icon: Cpu },
+            { label: "Education", value: profile.education, icon: GraduationCap },
+            { label: "Location", value: profile.location, icon: MapPin },
+            { label: "Status", value: profile.status, icon: Zap },
           ].map((c, i, arr) => {
             const Icon = c.icon;
             return (
@@ -1647,7 +2204,7 @@ function Dashboard({ navigate, ownerMode }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Panel title="Proficiency Overview" className="lg:col-span-1">
           <div className="space-y-5">
-            {PROFICIENCY.map((p, i) => (
+            {proficiency.map((p, i) => (
               <div key={i}>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span style={{ color: C.text }}>{p.label}</span>
@@ -1669,12 +2226,12 @@ function Dashboard({ navigate, ownerMode }) {
           padded={false}
         >
           <div>
-            {PROJECTS.map((p, i) => (
+            {projects.map((p, i) => (
               <button
                 key={p.id}
                 onClick={() => navigate("projects")}
                 className="w-full flex items-center gap-3 py-2.5 px-4 text-left"
-                style={{ borderBottom: i !== PROJECTS.length - 1 ? `1px solid ${C.borderSoft}` : "none" }}
+                style={{ borderBottom: i !== projects.length - 1 ? `1px solid ${C.borderSoft}` : "none" }}
               >
                 <PriorityDot priority={p.priority} />
                 <span className="flex-1 text-xs truncate" style={{ color: C.text }}>{p.title}</span>
@@ -1702,13 +2259,13 @@ export default function App() {
 
   const view = {
     dashboard: <Dashboard navigate={setActive} ownerMode={ownerMode} />,
-    projects: <ProjectsPage onOpen={openProject} />,
+    projects: <ProjectsPage onOpen={openProject} ownerMode={ownerMode} />,
     certificates: <CertificatesPage ownerMode={ownerMode} />,
     resume: <ResumePage ownerMode={ownerMode} />,
-    skills: <SkillsPage />,
-    experience: <ExperiencePage />,
+    skills: <SkillsPage ownerMode={ownerMode} />,
+    experience: <ExperiencePage ownerMode={ownerMode} />,
     about: <AboutPage ownerMode={ownerMode} />,
-    contact: <ContactPage />,
+    contact: <ContactPage ownerMode={ownerMode} />,
   }[active];
 
   return (
