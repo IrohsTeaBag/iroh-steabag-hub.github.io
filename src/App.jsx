@@ -4,7 +4,7 @@ import {
   Briefcase, Mail, Search, Bell, ChevronRight, ChevronLeft, Github, Linkedin,
   ExternalLink, Download, Shield, Activity, Lock, Eye,
   CheckCircle2, Clock, X, Cpu, Server, Zap, MapPin, GraduationCap, Send,
-  ShieldAlert, ShieldCheck, PlayCircle, Trash2, Plus, Unlock, Upload
+  ShieldAlert, ShieldCheck, PlayCircle, Trash2, Plus, Unlock, Upload, Menu
 } from "lucide-react";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar as RRadar, ResponsiveContainer,
@@ -534,7 +534,7 @@ function OwnerToggle({ ownerMode, setOwnerMode }) {
 }
 
 /* ============================== SIDEBAR ============================== */
-function Sidebar({ active, setActive, collapsed, setCollapsed }) {
+function Sidebar({ active, setActive, collapsed, setCollapsed, onClose }) {
   return (
     <div
       className="h-full flex flex-col shrink-0 transition-all duration-200"
@@ -545,10 +545,15 @@ function Sidebar({ active, setActive, collapsed, setCollapsed }) {
           <Shield size={16} color="#04140B" strokeWidth={2.5} />
         </div>
         {!collapsed && (
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-mono text-[12px] font-bold tracking-wide truncate" style={{ color: C.text }}>TUMISO.NGWAKO</div>
             <div className="text-[10px] font-mono truncate" style={{ color: C.faint }}>SEC_CONSOLE v3.0</div>
           </div>
+        )}
+        {onClose && (
+          <button onClick={onClose} className="p-1.5 shrink-0 md:hidden" style={{ color: C.dim, borderRadius: RADIUS }}>
+            <X size={16} />
+          </button>
         )}
       </div>
 
@@ -563,7 +568,7 @@ function Sidebar({ active, setActive, collapsed, setCollapsed }) {
           return (
             <button
               key={item.id}
-              onClick={() => setActive(item.id)}
+              onClick={() => { setActive(item.id); if (onClose) onClose(); }}
               className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium relative"
               style={{ color: isActive ? C.text : C.dim, background: isActive ? C.raised : "transparent", borderRadius: RADIUS }}
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = C.panelAlt; }}
@@ -577,15 +582,17 @@ function Sidebar({ active, setActive, collapsed, setCollapsed }) {
         })}
       </nav>
 
-      <div className="p-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 py-2 text-[11px] font-mono"
-          style={{ color: C.faint, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}
-        >
-          {collapsed ? <ChevronRight size={13} /> : <><ChevronLeft size={13} /> COLLAPSE</>}
-        </button>
-      </div>
+      {!onClose && (
+        <div className="p-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full flex items-center justify-center gap-2 py-2 text-[11px] font-mono"
+            style={{ color: C.faint, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}
+          >
+            {collapsed ? <ChevronRight size={13} /> : <><ChevronLeft size={13} /> COLLAPSE</>}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -616,7 +623,7 @@ function NotificationsBell() {
 }
 
 /* ============================== TOPBAR ============================== */
-function Topbar({ query, setQuery, onNavigate, ownerMode, setOwnerMode }) {
+function Topbar({ query, setQuery, onNavigate, ownerMode, setOwnerMode, onMenuClick }) {
   const [focused, setFocused] = useState(false);
   const results = useMemo(() => {
     if (!query.trim()) return [];
@@ -624,7 +631,15 @@ function Topbar({ query, setQuery, onNavigate, ownerMode, setOwnerMode }) {
   }, [query]);
 
   return (
-    <div className="flex items-center gap-3 px-6 shrink-0 relative" style={{ height: 58, background: "#0D0E11", borderBottom: `1px solid ${C.border}` }}>
+    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 shrink-0 relative" style={{ height: 58, background: "#0D0E11", borderBottom: `1px solid ${C.border}` }}>
+      <button
+        onClick={onMenuClick}
+        className="p-2 shrink-0 md:hidden"
+        style={{ color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}
+        title="Open menu"
+      >
+        <Menu size={16} />
+      </button>
       <div className="relative flex-1 max-w-md">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.faint }} />
         <input
@@ -965,7 +980,7 @@ function ProjectsPage({ onOpen }) {
   const filtered = filter === "All" ? PROJECTS : PROJECTS.filter((p) => p.category === filter);
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <SectionEyebrow n="04">Projects</SectionEyebrow>
       <div className="flex flex-wrap gap-2 mb-6">
         {cats.map((c) => (
@@ -1097,7 +1112,7 @@ function CertificatesPage({ ownerMode }) {
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
 
   return (
-    <div className="p-8 space-y-10">
+    <div className="p-4 sm:p-6 md:p-8 space-y-10">
       <div>
         <SectionEyebrow n="06" right={ownerMode && <Btn variant="primary" onClick={() => setShowForm((s) => !s)}><Plus size={12} /> Add certificate</Btn>}>
           Certifications
@@ -1181,7 +1196,7 @@ function CVManager({ ownerMode }) {
 
 function ResumePage({ ownerMode }) {
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6">
       <SectionEyebrow n="—">CV</SectionEyebrow>
 
       <CVManager ownerMode={ownerMode} />
@@ -1236,7 +1251,7 @@ function ResumePage({ ownerMode }) {
 /* ============================== SKILLS ============================== */
 function SkillsPage() {
   return (
-    <div className="p-8 space-y-10">
+    <div className="p-4 sm:p-6 md:p-8 space-y-10">
       <SectionEyebrow n="02">Skills</SectionEyebrow>
       {SKILL_GROUPS.map((g, gi) => (
         <div key={gi}>
@@ -1281,7 +1296,7 @@ function SkillsPage() {
 /* ============================== EXPERIENCE / TIMELINE ============================== */
 function ExperiencePage() {
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <SectionEyebrow n="05">Timeline</SectionEyebrow>
       <div className="relative pl-8">
         <div className="absolute left-[7px] top-2 bottom-2 w-px" style={{ background: C.border }} />
@@ -1313,7 +1328,7 @@ function AboutPage({ ownerMode }) {
     { label: "Status", value: PROFILE.status, icon: Zap },
   ];
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <SectionEyebrow n="01">About</SectionEyebrow>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
@@ -1360,7 +1375,7 @@ function ContactPage() {
   ];
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <SectionEyebrow n="—">Contact</SectionEyebrow>
       <Panel className="mb-6">
         <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>Let's talk security.</h2>
@@ -1516,7 +1531,7 @@ function Dashboard({ navigate, ownerMode }) {
   ];
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6">
       {/* Header panel */}
       <Panel>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -1679,6 +1694,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState(null);
   const [ownerMode, setOwnerMode] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const openProject = (p) => setSelectedProject(p);
 
@@ -1695,10 +1711,41 @@ export default function App() {
 
   return (
     <div className="w-full h-screen flex flex-col" style={{ background: C.bg, fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
-      <div className="flex flex-1 min-h-0">
-        <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <div className="flex flex-1 min-h-0 relative">
+        {/* Desktop sidebar — always visible from md breakpoint up */}
+        <div className="hidden md:block h-full">
+          <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
+        </div>
+
+        {/* Mobile sidebar — off-canvas drawer, opened via the hamburger button */}
+        {mobileNavOpen && (
+          <div className="md:hidden">
+            <div
+              className="fixed inset-0 z-40"
+              style={{ background: "rgba(0,0,0,.6)" }}
+              onClick={() => setMobileNavOpen(false)}
+            />
+            <div className="fixed inset-y-0 left-0 z-50 h-full">
+              <Sidebar
+                active={active}
+                setActive={setActive}
+                collapsed={false}
+                setCollapsed={() => {}}
+                onClose={() => setMobileNavOpen(false)}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-w-0 flex flex-col">
-          <Topbar query={query} setQuery={setQuery} onNavigate={setActive} ownerMode={ownerMode} setOwnerMode={setOwnerMode} />
+          <Topbar
+            query={query}
+            setQuery={setQuery}
+            onNavigate={setActive}
+            ownerMode={ownerMode}
+            setOwnerMode={setOwnerMode}
+            onMenuClick={() => setMobileNavOpen(true)}
+          />
           <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: C.bg }}>
             {view}
           </div>
