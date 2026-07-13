@@ -75,7 +75,50 @@ npm run dev
 
 Then open the URL it prints (usually http://localhost:5173).
 
-## Hosting it on GitHub Pages
+## Hosting it on GitHub Pages — no terminal needed
+
+This project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`)
+that automatically builds and publishes the site every time you update files
+on GitHub — entirely on GitHub's own servers. You never need to run `npm`
+or `git` on your own computer for this.
+
+### 1. Get the files into your repo
+If your repo is empty (or you want to start fresh):
+- Go to your repo on GitHub → **Add file → Upload files**
+- Open this project folder on your computer, select everything inside it
+  (including the `.github` folder — enable "show hidden files" in Windows
+  Explorer if you don't see it) and drag it all into the upload box
+- Scroll down, add a commit message, click **Commit changes**
+
+If your repo already has files from an earlier attempt, you can instead
+just edit files individually (see step 3 below) and add the workflow file
+the same way — click **Add file → Create new file**, name it exactly
+`.github/workflows/deploy.yml` (GitHub will auto-create the folders), and
+paste in the contents from this project's copy of that file.
+
+### 2. Turn on GitHub Actions as the Pages source
+- Go to your repo → **Settings → Pages**
+- Under "Build and deployment" → **Source**, choose **GitHub Actions**
+  (not "Deploy from a branch")
+
+### 3. Edit `src/storage.js` directly on GitHub (for the Supabase step)
+- In your repo, navigate to `src/storage.js`
+- Click the pencil (✏️) icon to edit
+- Replace the placeholder `SUPABASE_URL` / `SUPABASE_ANON_KEY` with your
+  real values
+- Scroll down, click **Commit changes**
+
+### 4. That's it
+Any time you commit a change — through the web editor, a file upload, or
+from your own computer if you use git later — GitHub automatically rebuilds
+and republishes the live site within a minute or two. Check the **Actions**
+tab in your repo to watch it run and confirm it succeeded (green check).
+
+---
+
+## Hosting it via your own computer (alternative)
+
+If you'd rather build/deploy locally instead of through GitHub Actions:
 
 1. **Create a new repo on GitHub** (e.g. `tumiso-portfolio`) — don't
    initialize it with a README, since you already have one here.
