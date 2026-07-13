@@ -2,29 +2,69 @@
 
 A Splunk-style dashboard portfolio built with React, Vite, and Tailwind.
 
-## ⚠️ Read this first: about the "owner mode" uploads
+## Making uploads visible to everyone (Supabase setup)
 
-Inside Claude, the photo/CV/certificate/video uploads were saved to a shared
-backend that every visitor could see. This standalone version uses your
-**browser's local storage** instead (see `src/storage.js`), which means:
+Right now, `src/storage.js` falls back to your browser's local storage,
+which means uploads you make in owner mode are only visible to you. To
+make them visible to every visitor, connect a free Supabase project —
+takes about 5 minutes.
 
-- Anything you upload as owner will only appear **in your own browser**.
-- Other people visiting your live site will **not** see what you've
-  uploaded — they'll only see the seeded starter data (your bio, projects,
-  skills, and the original certificate list from our conversation).
-- Clearing your browser data will wipe what you've uploaded.
+### 1. Create a Supabase project
+- Go to **supabase.com** → sign up (free) → **New Project**
+- Pick any name/region, set a database password (you won't need it again
+  for this), and wait ~1 minute for it to spin up
 
-This is fine for testing locally, but if you want visitors to actually see
-your real certificates/videos/CV once this is live, you need a real
-database behind it. Two free, beginner-friendly options:
+### 2. Create the storage table
+In your new project, go to the **SQL Editor** (left sidebar) → New query →
+paste this in and click **Run**:
 
-1. **Supabase** (supabase.com) — free Postgres database + simple JS client.
-   Swap the functions in `src/storage.js` to call Supabase instead of
-   `localStorage`.
-2. **Firebase** (firebase.google.com) — free Firestore database, similar idea.
+```sql
+create table if not exists kv_store (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz default now()
+);
 
-If you'd like, I can wire either of these up for you — just say the word
-and let me know which one you'd prefer.
+alter table kv_store enable row level security;
+
+create policy "Public read" on kv_store for select using (true);
+create policy "Public write" on kv_store for insert with check (true);
+create policy "Public update" on kv_store for update using (true);
+create policy "Public delete" on kv_store for delete using (true);
+```
+
+**Honest note on security:** these policies make the table fully open to
+anyone who calls the API directly (not just through your site's owner
+passcode). For a personal portfolio the worst case is someone vandalizing
+your data, which you can fix by re-uploading — but it is not real
+access control. If you'd like proper protection (only you can write, based
+on real login rather than a shared passcode), that's a bigger step using
+Supabase Auth — ask and I can wire that up separately.
+
+### 3. Get your API credentials
+Go to **Settings → API** in your Supabase project. You need two values:
+- **Project URL** (looks like `https://abcdefgh.supabase.co`)
+- **anon public** key (a long string under "Project API keys")
+
+### 4. Paste them into the project
+Open `src/storage.js` and edit these two lines near the top:
+```js
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+```
+Replace with your actual values from step 3.
+
+### 5. Rebuild and redeploy
+```bash
+npm install
+npm run deploy
+```
+
+That's it — from now on, anything uploaded through owner mode (photo, CV,
+certificates, videos, project code links) will be visible to every visitor,
+not just you. Until you complete this, the site still works fine for
+browsing and for previewing your own uploads locally — it just won't share
+them with anyone else yet.
 
 ## Running it locally
 
