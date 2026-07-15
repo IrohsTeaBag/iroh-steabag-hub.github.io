@@ -6,7 +6,12 @@
 
 import { fileStorageReady, uploadFile, deleteFile } from "./fileStorage";
 
-export const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200MB — keep an eye on Supabase's free 1GB total storage
+// Supabase's free tier enforces a hard 50MB-per-file limit at the platform
+// level (not something this app controls) — uploads above this will be
+// rejected by Supabase itself regardless of what this constant says.
+// If you upgrade to Supabase Pro, you can raise this (their limit becomes
+// up to 500GB), and should also raise the number below to match.
+export const MAX_VIDEO_BYTES = 48 * 1024 * 1024; // 48MB, just under Supabase's 50MB free-tier ceiling
 
 export function videoUploadReady() {
   return fileStorageReady();

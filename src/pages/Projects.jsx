@@ -329,8 +329,96 @@ export function ProjectCodeLink({ project, ownerMode }) {
   );
 }
 
-export function ProjectDetail({ project, onClose, ownerMode }) {
+function ProjectEditForm({ project, onSave, onCancel }) {
+  const [form, setForm] = useState({
+    title: project.title, category: project.category, date: project.date,
+    priority: project.priority, status: project.status, difficulty: project.difficulty || "Intermediate",
+    secondary: !!project.secondary,
+    description: project.description || "", overview: project.overview || "",
+    goal: project.goal || "", whatIDid: project.whatIDid || "", whatIFound: project.whatIFound || "",
+    whatILearned: project.whatILearned || "", skillProven: project.skillProven || "",
+    tagsText: (project.tags || []).join(", "),
+    techText: (project.tech || []).join(", "),
+    objectivesText: (project.objectives || []).join("\n"),
+  });
+  const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
+
+  function submit(e) {
+    e.preventDefault();
+    onSave({
+      ...project,
+      title: form.title.trim() || project.title,
+      category: form.category.trim(),
+      date: form.date.trim(),
+      priority: form.priority,
+      status: form.status,
+      difficulty: form.difficulty,
+      secondary: form.secondary,
+      description: form.description.trim(),
+      overview: form.overview.trim(),
+      goal: form.goal.trim(),
+      whatIDid: form.whatIDid.trim(),
+      whatIFound: form.whatIFound.trim(),
+      whatILearned: form.whatILearned.trim(),
+      skillProven: form.skillProven.trim(),
+      tags: form.tagsText.split(",").map((t) => t.trim()).filter(Boolean),
+      tech: form.techText.split(",").map((t) => t.trim()).filter(Boolean),
+      objectives: form.objectivesText.split("\n").map((t) => t.trim()).filter(Boolean),
+    });
+  }
+
+  return (
+    <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <input required value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Project title" className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+      <input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Category" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+      <input value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} placeholder="Date" className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+
+      <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+        <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+        <option>IN PROGRESS</option><option>RESOLVED</option>
+      </select>
+      <select value={form.difficulty} onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle}>
+        <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+      </select>
+      <label className="flex items-center gap-2 text-xs" style={{ color: C.dim }}>
+        <input type="checkbox" checked={form.secondary} onChange={(e) => setForm((f) => ({ ...f, secondary: e.target.checked }))} />
+        OT / ICS project (secondary focus styling)
+      </label>
+
+      <textarea placeholder="Short description (shown on the card)" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <textarea placeholder="Overview" rows={2} value={form.overview} onChange={(e) => setForm((f) => ({ ...f, overview: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <textarea placeholder="Objectives — one per line" rows={3} value={form.objectivesText} onChange={(e) => setForm((f) => ({ ...f, objectivesText: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <input placeholder="Tags, comma separated" value={form.tagsText} onChange={(e) => setForm((f) => ({ ...f, tagsText: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+      <input placeholder="Tools, comma separated" value={form.techText} onChange={(e) => setForm((f) => ({ ...f, techText: e.target.value }))} className="px-3 py-2 text-xs outline-none" style={inputStyle} />
+
+      <div className="md:col-span-2 pt-2" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+        <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Interview-ready breakdown</div>
+      </div>
+      <textarea placeholder="Goal — what were you trying to achieve?" rows={2} value={form.goal} onChange={(e) => setForm((f) => ({ ...f, goal: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <textarea placeholder="What I Did" rows={2} value={form.whatIDid} onChange={(e) => setForm((f) => ({ ...f, whatIDid: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <textarea placeholder="What I Found" rows={2} value={form.whatIFound} onChange={(e) => setForm((f) => ({ ...f, whatIFound: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <textarea placeholder="What I Learned" rows={2} value={form.whatILearned} onChange={(e) => setForm((f) => ({ ...f, whatILearned: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
+      <input placeholder="Skill It Proves" value={form.skillProven} onChange={(e) => setForm((f) => ({ ...f, skillProven: e.target.value }))} className="md:col-span-2 px-3 py-2 text-xs outline-none" style={inputStyle} />
+
+      <div className="md:col-span-2 flex gap-2">
+        <Btn variant="primary" type="submit">Save changes</Btn>
+        <Btn variant="ghost" type="button" onClick={onCancel}>Cancel</Btn>
+      </div>
+    </form>
+  );
+}
+
+export function ProjectDetail({ project, onClose, onUpdate, ownerMode }) {
+  const [editing, setEditing] = useState(false);
   if (!project) return null;
+
+  function handleSave(updated) {
+    onUpdate(updated);
+    setEditing(false);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-10 px-4" style={{ background: "rgba(4,5,6,0.85)" }} onClick={onClose}>
       <div className="w-full max-w-3xl" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: RADIUS }} onClick={(e) => e.stopPropagation()}>
@@ -342,55 +430,101 @@ export function ProjectDetail({ project, onClose, ownerMode }) {
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="flex flex-wrap gap-2 items-center">
-            {project.tags.map((t) => (
-              <span key={t} className="text-[11px] font-mono px-2 py-1" style={{ background: C.panelAlt, color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>{t}</span>
-            ))}
-            <StatusPill status={project.status} />
-          </div>
-
-          <div>
-            <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Overview</div>
-            <p className="text-sm leading-relaxed" style={{ color: C.dim }}>{project.overview}</p>
-          </div>
-
-          <div>
-            <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Objectives</div>
-            <ul className="space-y-1.5">
-              {project.objectives.map((o, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm" style={{ color: C.text }}>
-                  <CheckCircle2 size={14} className="mt-0.5 shrink-0" style={{ color: C.green }} /> {o}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {project.metrics && project.metrics.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              {project.metrics.map((m, i) => (
-                <div key={i} className="p-3 text-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
-                  <div className="text-xs font-bold" style={{ color: C.text }}>{m.value}</div>
-                  <div className="text-[10px] mt-1" style={{ color: C.faint }}>{m.label}</div>
-                </div>
-              ))}
-            </div>
+          {ownerMode && !editing && (
+            <Btn variant="outline" onClick={() => setEditing(true)}>Edit project</Btn>
           )}
 
-          <div>
-            <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Technologies Used</div>
-            <div className="flex flex-wrap gap-2">
-              {project.tech.map((t) => (
-                <span key={t} className="text-xs px-2.5 py-1" style={{ border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS }}>{t}</span>
-              ))}
-            </div>
-          </div>
+          {editing ? (
+            <ProjectEditForm project={project} onSave={handleSave} onCancel={() => setEditing(false)} />
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 items-center">
+                {project.tags.map((t) => (
+                  <span key={t} className="text-[11px] font-mono px-2 py-1" style={{ background: C.panelAlt, color: C.dim, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>{t}</span>
+                ))}
+                <StatusPill status={project.status} />
+              </div>
 
-          <ProjectVideos project={project} ownerMode={ownerMode} />
+              {project.goal && (
+                <div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Goal</div>
+                  <p className="text-sm leading-relaxed" style={{ color: C.dim }}>{project.goal}</p>
+                </div>
+              )}
 
-          <div className="flex flex-wrap gap-2 items-center pt-2">
-            <ProjectReport project={project} ownerMode={ownerMode} />
-            <ProjectCodeLink project={project} ownerMode={ownerMode} />
-          </div>
+              <div>
+                <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Overview</div>
+                <p className="text-sm leading-relaxed" style={{ color: C.dim }}>{project.overview}</p>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Objectives</div>
+                <ul className="space-y-1.5">
+                  {project.objectives.map((o, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: C.text }}>
+                      <CheckCircle2 size={14} className="mt-0.5 shrink-0" style={{ color: C.green }} /> {o}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {project.metrics && project.metrics.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {project.metrics.map((m, i) => (
+                    <div key={i} className="p-3 text-center" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+                      <div className="text-xs font-bold" style={{ color: C.text }}>{m.value}</div>
+                      <div className="text-[10px] mt-1" style={{ color: C.faint }}>{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: C.green }}>Tools</div>
+                <div className="flex flex-wrap gap-2">
+                  {project.tech.map((t) => (
+                    <span key={t} className="text-xs px-2.5 py-1" style={{ border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+
+              {(project.whatIDid || project.whatIFound || project.whatILearned || project.skillProven) && (
+                <div className="space-y-4 p-4" style={{ background: C.panelAlt, border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS }}>
+                  {project.whatIDid && (
+                    <div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: C.blue }}>What I Did</div>
+                      <p className="text-sm leading-relaxed" style={{ color: C.text }}>{project.whatIDid}</p>
+                    </div>
+                  )}
+                  {project.whatIFound && (
+                    <div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: C.blue }}>What I Found</div>
+                      <p className="text-sm leading-relaxed" style={{ color: C.text }}>{project.whatIFound}</p>
+                    </div>
+                  )}
+                  {project.whatILearned && (
+                    <div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: C.blue }}>What I Learned</div>
+                      <p className="text-sm leading-relaxed" style={{ color: C.text }}>{project.whatILearned}</p>
+                    </div>
+                  )}
+                  {project.skillProven && (
+                    <div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: C.blue }}>Skill It Proves</div>
+                      <p className="text-sm leading-relaxed font-semibold" style={{ color: C.text }}>{project.skillProven}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <ProjectVideos project={project} ownerMode={ownerMode} />
+
+              <div className="flex flex-wrap gap-2 items-center pt-2">
+                <ProjectReport project={project} ownerMode={ownerMode} />
+                <ProjectCodeLink project={project} ownerMode={ownerMode} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -486,6 +620,11 @@ export function ProjectsPage({ ownerMode }) {
     setProjects(projects.filter((p) => p.id !== id));
   }
 
+  function updateProject(updated) {
+    setProjects(projects.map((p) => (p.id === updated.id ? updated : p)));
+    setSelectedProject(updated);
+  }
+
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };
 
   return (
@@ -546,7 +685,7 @@ export function ProjectsPage({ ownerMode }) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {filtered.map((p) => <ProjectCard key={p.id} p={p} onOpen={setSelectedProject} ownerMode={ownerMode} onDelete={deleteProject} />)}
       </div>
-      <ProjectDetail project={selectedProject} onClose={() => setSelectedProject(null)} ownerMode={ownerMode} />
+      <ProjectDetail project={selectedProject} onClose={() => setSelectedProject(null)} onUpdate={updateProject} ownerMode={ownerMode} />
     </div>
   );
 }
