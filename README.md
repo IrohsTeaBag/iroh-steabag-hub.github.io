@@ -54,6 +54,37 @@ const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 ```
 Replace with your actual values from step 3.
 
+### 4b. Direct video uploads (optional but recommended)
+
+The steps above (the `kv_store` table) handle text and small files like
+certificates, your CV, and images. Video files are too big for that, so
+direct video upload uses a different Supabase feature: **Storage** (a real
+file/object store, similar to how YouTube or Dropbox store files).
+
+1. In your Supabase project, go to **Storage** (left sidebar) → **New bucket**
+2. Name it exactly: `project-media`
+3. Toggle **Public bucket** to ON (so visitors can actually view/play videos
+   without needing to log in) → **Create bucket**
+4. That's it — no extra code changes needed, since `src/videoUpload.js`
+   already points at a bucket with this exact name.
+
+Once this bucket exists, the "Upload file" option appears when adding a
+video to any project (owner mode → open a project → Videos → Add video).
+It generates a real thumbnail automatically by grabbing a frame from the
+video, uploads the file itself to this bucket, and visitors can play it
+right on the site — no external links needed.
+
+**Size note:** Supabase's free tier includes 1GB of Storage and 2GB of
+monthly bandwidth (egress) shared across your whole project. Video files
+add up fast — a few short, reasonably compressed clips are fine, but avoid
+uploading many long, high-resolution videos on the free tier. The app caps
+individual uploads at 200MB as a safety limit (adjustable in
+`src/videoUpload.js` via `MAX_VIDEO_BYTES`), but you'll likely want to stay
+well under your total 1GB budget across all videos combined.
+
+If you skip this step, the "Paste link" option (e.g. a YouTube URL) still
+works exactly as before — direct upload is purely additive.
+
 ### 5. Rebuild and redeploy
 ```bash
 npm install
@@ -175,6 +206,10 @@ If you'd rather build/deploy locally instead of through GitHub Actions:
 
 ## Project structure
 
+The site is now split into per-page files, each of which loads on demand
+(code-split) instead of all bundled into one giant file — this makes the
+initial page load noticeably lighter.
+
 ```
 tumiso-portfolio/
 ├── index.html
@@ -183,8 +218,34 @@ tumiso-portfolio/
 ├── tailwind.config.js
 ├── postcss.config.js
 └── src/
-    ├── main.jsx      # entry point, installs the storage shim
-    ├── App.jsx        # the whole site (all pages/components)
-    ├── storage.js      # localStorage-backed storage shim
-    └── index.css       # Tailwind entry
+    ├── main.jsx              # entry point, installs the storage shim
+    ├── App.jsx                # app shell: sidebar, topbar, lazy-loads pages
+    ├── data.js                 # all the seed content (bio, projects, skills…)
+    ├── hooks.js                 # shared data hooks (useProjects, useProfile…)
+    ├── ui.jsx                    # shared small components (Btn, Panel…)
+    ├── storage.js                 # Supabase-backed key-value storage
+    ├── fileStorage.js               # Supabase Storage file upload/download
+    ├── videoUpload.js                 # video-specific upload + thumbnails
+    ├── index.css                       # Tailwind entry
+    ├── components/
+    │   ├── Shell.jsx           # Sidebar, Topbar, notifications bell
+    │   ├── OwnerToggle.jsx      # owner passcode login
+    │   ├── ProfilePhoto.jsx      # profile photo (owner-uploadable)
+    │   └── DocumentLightbox.jsx   # inline PDF/image viewer
+    └── pages/
+        ├── Dashboard.jsx
+        ├── Projects.jsx        # includes project detail, videos, reports
+        ├── Certificates.jsx    # includes Training & Self-Study
+        ├── Resume.jsx
+        ├── Skills.jsx
+        ├── Experience.jsx
+        ├── About.jsx
+        └── Contact.jsx
 ```
+
+**Important if you're updating an existing deployment:** because the file
+structure changed (one file became many), make sure you push/upload the
+**entire `src` folder** — including the new `components/` and `pages/`
+subfolders — not just a single updated file. If you're using the GitHub web
+upload method, drag the whole `src` folder in again so the new subfolders
+are included.

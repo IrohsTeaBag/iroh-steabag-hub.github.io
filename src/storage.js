@@ -11,7 +11,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 // ---- 1. Paste your Supabase project details here after setup ----
-const SUPABASE_URL = "https://csrctjumjbqrijanmjww.supabase.co"; // e.g. "https://abcdefgh.supabase.co"
+const SUPABASE_URL = "https://csrctjumjbqrijanmjww.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcmN0anVtamJxcmlqYW5tand3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4NzA1NjEsImV4cCI6MjA5OTQ0NjU2MX0.25tZgWvd-jR4bGme62c3440UnjDenkfU8c9V2cp54yo";
 // -------------------------------------------------------------------
 
@@ -28,6 +28,8 @@ if (isConfigured) {
     console.warn("Supabase failed to initialize, falling back to local-only storage.", e);
   }
 }
+
+export { supabase, isConfigured as isSupabaseConfigured };
 
 if (!supabase && typeof window !== "undefined" && !window.__storageWarned) {
   window.__storageWarned = true;
