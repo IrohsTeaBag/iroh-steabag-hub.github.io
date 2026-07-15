@@ -192,26 +192,26 @@ export function ProjectVideos({ project, ownerMode }) {
       ) : videos.length === 0 ? (
         <div className="text-xs" style={{ color: C.faint }}>No videos added for this project yet.</div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {videos.map((v) => {
             const img = tileImage(v);
             return (
               <div key={v.id} className="relative" style={{ border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS, overflow: "hidden" }}>
                 <button
                   onClick={() => setLightbox(v)}
-                  className="w-full h-20 flex items-center justify-center relative"
+                  className="w-full aspect-video flex items-center justify-center relative"
                   style={{ background: img ? `${C.panelAlt} url(${img}) center/cover no-repeat` : C.panelAlt }}
                 >
                   {img && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,.35)" }} />}
-                  <PlayCircle size={20} style={{ color: C.green, position: "relative" }} />
+                  <PlayCircle size={40} style={{ color: C.green, position: "relative" }} />
                 </button>
-                <div className="px-2 py-1.5" style={{ background: C.panel }}>
-                  <div className="text-[11px] font-semibold truncate" style={{ color: C.text }}>{v.title}</div>
-                  <div className="text-[10px]" style={{ color: C.faint }}>{v.kind}</div>
+                <div className="px-3 py-2" style={{ background: C.panel }}>
+                  <div className="text-sm font-semibold truncate" style={{ color: C.text }}>{v.title}</div>
+                  <div className="text-xs" style={{ color: C.faint }}>{v.kind}</div>
                 </div>
                 {ownerMode && (
-                  <button onClick={() => removeVideo(v)} className="absolute top-1.5 right-1.5 p-1" style={{ background: "rgba(0,0,0,.65)", borderRadius: RADIUS }} title="Delete video">
-                    <Trash2 size={12} style={{ color: C.red }} />
+                  <button onClick={() => removeVideo(v)} className="absolute top-2 right-2 p-1.5" style={{ background: "rgba(0,0,0,.65)", borderRadius: RADIUS }} title="Delete video">
+                    <Trash2 size={14} style={{ color: C.red }} />
                   </button>
                 )}
               </div>

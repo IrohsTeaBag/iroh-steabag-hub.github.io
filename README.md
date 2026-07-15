@@ -65,8 +65,33 @@ file/object store, similar to how YouTube or Dropbox store files).
 2. Name it exactly: `project-media`
 3. Toggle **Public bucket** to ON (so visitors can actually view/play videos
    without needing to log in) → **Create bucket**
-4. That's it — no extra code changes needed, since `src/videoUpload.js`
-   already points at a bucket with this exact name.
+4. **Important — this step is easy to miss:** "Public" only controls who
+   can *view* files, not who can *upload* them. Without an explicit policy,
+   uploading will fail with an error like *"new row violates row-level
+   security policy"*. Go to the **SQL Editor** and run:
+   ```sql
+   create policy "Public read project-media"
+   on storage.objects for select
+   using ( bucket_id = 'project-media' );
+
+   create policy "Public upload project-media"
+   on storage.objects for insert
+   with check ( bucket_id = 'project-media' );
+
+   create policy "Public update project-media"
+   on storage.objects for update
+   using ( bucket_id = 'project-media' );
+
+   create policy "Public delete project-media"
+   on storage.objects for delete
+   using ( bucket_id = 'project-media' );
+   ```
+   Same honest caveat as the `kv_store` policies earlier: this makes the
+   bucket fully open to anyone calling the API directly, not just through
+   your site's owner passcode. Fine for a personal portfolio; not real
+   access control.
+5. That's it — no code changes needed, since `src/videoUpload.js` already
+   points at a bucket with this exact name.
 
 Once this bucket exists, the "Upload file" option appears when adding a
 video to any project (owner mode → open a project → Videos → Add video).
@@ -74,13 +99,19 @@ It generates a real thumbnail automatically by grabbing a frame from the
 video, uploads the file itself to this bucket, and visitors can play it
 right on the site — no external links needed.
 
-**Size note:** Supabase's free tier includes 1GB of Storage and 2GB of
-monthly bandwidth (egress) shared across your whole project. Video files
-add up fast — a few short, reasonably compressed clips are fine, but avoid
-uploading many long, high-resolution videos on the free tier. The app caps
-individual uploads at 200MB as a safety limit (adjustable in
-`src/videoUpload.js` via `MAX_VIDEO_BYTES`), but you'll likely want to stay
-well under your total 1GB budget across all videos combined.
+**Size note:** Supabase's free tier enforces a **hard 50MB-per-file limit**
+at the platform level — this isn't something the app can override; files
+larger than that will be rejected by Supabase itself before they even
+reach your bucket. The app caps uploads at 48MB (in `src/videoUpload.js`
+via `MAX_VIDEO_BYTES`) to stay just under that. On top of the per-file
+limit, the free tier also includes 1GB of total Storage and 2GB of monthly
+bandwidth shared across your whole project, so a handful of compressed
+clips is realistic, but many videos will add up fast. If you need larger
+files or more headroom, Supabase's Pro plan raises the per-file limit up
+to 500GB — in that case, also increase `MAX_VIDEO_BYTES` to match.
+
+For clips over 48MB, compress them first (shorter length, lower
+resolution, or a free tool like HandBrake) before uploading.
 
 If you skip this step, the "Paste link" option (e.g. a YouTube URL) still
 works exactly as before — direct upload is purely additive.
