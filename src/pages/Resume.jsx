@@ -1,29 +1,24 @@
 import React, { useState, useRef } from "react";
-import { Download, Eye, ShieldCheck, Trash2, Upload } from "lucide-react";
-import { C, RADIUS } from "../data";
-import { useStoredJSON, useSkillGroups, useTimeline, useTraining, useCertificates } from "../hooks";
+import { Download, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { C, RADIUS, MAX_UPLOAD_BYTES } from "../data";
+import { useStoredJSON, useSkillGroups, useTimeline, useTraining, useCertificates, fileToDataURL } from "../hooks";
 import { SectionEyebrow, Btn, Panel } from "../ui";
-import DocumentLightbox from "../components/DocumentLightbox";
-import { fileStorageReady, uploadFile, deleteFile, downloadUrl, MAX_FILE_BYTES } from "../fileStorage";
 
 export function CVManager({ ownerMode }) {
   const [cv, setCv, loading] = useStoredJSON("cv-document", null);
-  const [viewing, setViewing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef(null);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_FILE_BYTES) { alert(`That file is too large (max ${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB).`); return; }
-    if (!fileStorageReady()) { alert("CV upload needs the Supabase Storage bucket set up first — see the README."); return; }
+    if (file.size > MAX_UPLOAD_BYTES) { alert("That file is too large. Please use a file under 4MB."); return; }
     setUploading(true);
     try {
-      const uploaded = await uploadFile(file, "cv");
-      if (cv?.path) deleteFile(cv.path);
-      setCv({ ...uploaded, uploadedAt: new Date().toLocaleDateString(), createdAt: Date.now() });
+      const dataUrl = await fileToDataURL(file);
+      setCv({ dataUrl, filename: file.name, uploadedAt: new Date().toLocaleDateString(), createdAt: Date.now() });
     } catch (err) {
-      alert(err?.message || "Upload failed. Please try again.");
+      alert("Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -31,7 +26,6 @@ export function CVManager({ ownerMode }) {
   }
 
   function removeCv() {
-    if (cv?.path) deleteFile(cv.path);
     setCv(null);
   }
 
@@ -51,15 +45,11 @@ export function CVManager({ ownerMode }) {
             <div className="text-sm font-semibold" style={{ color: C.text }}>{cv.filename}</div>
             <div className="text-[11px] mt-0.5" style={{ color: C.faint }}>Uploaded {cv.uploadedAt}</div>
           </div>
-          <div className="flex gap-2">
-            <Btn variant="primary" onClick={() => setViewing(true)}><Eye size={12} /> View CV</Btn>
-            <a href={downloadUrl(cv.url, cv.filename)}><Btn variant="outline"><Download size={12} /> Download</Btn></a>
-          </div>
+          <a href={cv.dataUrl} download={cv.filename}><Btn variant="primary"><Download size={12} /> Download</Btn></a>
         </div>
       ) : (
         <div className="text-xs" style={{ color: C.faint }}>{ownerMode ? "No CV uploaded yet — upload one above." : "CV not yet available."}</div>
       )}
-      {viewing && <DocumentLightbox doc={cv} onClose={() => setViewing(false)} />}
     </Panel>
   );
 }

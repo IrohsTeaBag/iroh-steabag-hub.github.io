@@ -1,40 +1,37 @@
 import React, { useState, useRef } from "react";
-import { FileText, ExternalLink, Download, Eye, Trash2, Plus, Upload } from "lucide-react";
-import { C, RADIUS } from "../data";
-import { useTraining, useCertificates } from "../hooks";
+import { FileText, ExternalLink, Download, Trash2, Plus, Upload } from "lucide-react";
+import { C, RADIUS, MAX_UPLOAD_BYTES } from "../data";
+import { useTraining, useCertificates, fileToDataURL } from "../hooks";
 import { SectionEyebrow, Btn, Panel } from "../ui";
-import DocumentLightbox from "../components/DocumentLightbox";
-import { fileStorageReady, uploadFile, deleteFile, downloadUrl, isImageFile, MAX_FILE_BYTES } from "../fileStorage";
+
+function isImageDataUrl(dataUrl) {
+  return typeof dataUrl === "string" && dataUrl.startsWith("data:image");
+}
 
 export function CertCard({ c, ownerMode, onDelete, onAttach, onRemoveFile, attaching }) {
   const inputRef = useRef(null);
-  const [viewing, setViewing] = useState(false);
-  const hasFile = !!c.fileUrl;
-  const isImage = hasFile && isImageFile(c.fileName);
+  const hasFile = !!c.fileDataUrl;
+  const isImage = hasFile && isImageDataUrl(c.fileDataUrl);
 
   return (
     <Panel title={c.status} right={ownerMode && onDelete && (
       <button onClick={onDelete} title="Delete certificate"><Trash2 size={13} style={{ color: C.red }} /></button>
     )}>
       {hasFile && isImage && (
-        <button
-          onClick={() => setViewing(true)}
-          className="w-full h-32 mb-3 overflow-hidden block"
+        <div
+          className="w-full h-32 mb-3 overflow-hidden"
           style={{ border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS, background: C.panelAlt }}
-          title="View certificate"
         >
-          <img src={c.fileUrl} alt={c.name} className="w-full h-full object-cover" />
-        </button>
+          <img src={c.fileDataUrl} alt={c.name} className="w-full h-full object-cover" />
+        </div>
       )}
       {hasFile && !isImage && (
-        <button
-          onClick={() => setViewing(true)}
+        <div
           className="w-full h-16 mb-3 flex items-center justify-center gap-2"
           style={{ border: `1px solid ${C.borderSoft}`, borderRadius: RADIUS, background: C.panelAlt, color: C.dim }}
-          title="View certificate"
         >
-          <FileText size={16} /> <span className="text-xs">{c.fileName || "View document"}</span>
-        </button>
+          <FileText size={16} /> <span className="text-xs">{c.fileName || "Document attached"}</span>
+        </div>
       )}
 
       <h3 className="text-sm font-bold mb-1.5 leading-snug" style={{ color: C.text }}>{c.name}</h3>
@@ -47,10 +44,7 @@ export function CertCard({ c, ownerMode, onDelete, onAttach, onRemoveFile, attac
             <a href={c.verifyUrl} target="_blank" rel="noreferrer"><Btn variant="ghost"><ExternalLink size={11} /> Verify</Btn></a>
           )}
           {hasFile && (
-            <>
-              <Btn variant="ghost" onClick={() => setViewing(true)}><Eye size={11} /> View</Btn>
-              <a href={downloadUrl(c.fileUrl, c.fileName)}><Btn variant="outline"><Download size={11} /> Download</Btn></a>
-            </>
+            <a href={c.fileDataUrl} download={c.fileName}><Btn variant="outline"><Download size={11} /> Download</Btn></a>
           )}
           {ownerMode && onAttach && (
             <>
@@ -63,8 +57,6 @@ export function CertCard({ c, ownerMode, onDelete, onAttach, onRemoveFile, attac
           )}
         </div>
       </div>
-
-      {viewing && <DocumentLightbox doc={{ url: c.fileUrl, filename: c.fileName }} onClose={() => setViewing(false)} />}
     </Panel>
   );
 }
@@ -78,34 +70,27 @@ export function CredentialSection({ n, title, credKey, useHook, ownerMode }) {
   function addItem(e) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    setList([...list, { id: `${Date.now()}`, createdAt: Date.now(), fileUrl: null, filePath: null, fileName: null, ...form }]);
+    setList([...list, { id: `${Date.now()}`, createdAt: Date.now(), fileDataUrl: null, fileName: null, ...form }]);
     setForm({ name: "", desc: "", status: "COMPLETE", issued: "", credentialId: "", verifyUrl: "" });
     setShowForm(false);
   }
   function removeItem(id) {
-    const item = list.find((c) => c.id === id);
-    if (item?.filePath) deleteFile(item.filePath);
     setList(list.filter((c) => c.id !== id));
   }
   async function attachFile(id, file) {
-    if (file.size > MAX_FILE_BYTES) { alert(`That file is too large (max ${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB).`); return; }
-    if (!fileStorageReady()) { alert("File uploads need the Supabase Storage bucket set up first — see the README."); return; }
+    if (file.size > MAX_UPLOAD_BYTES) { alert("That file is too large. Please use a file under 4MB."); return; }
     setAttachingId(id);
     try {
-      const uploaded = await uploadFile(file, `certificates/${credKey.replace(/\s+/g, "-")}`);
-      const prev = list.find((c) => c.id === id);
-      if (prev?.filePath) deleteFile(prev.filePath);
-      setList(list.map((c) => (c.id === id ? { ...c, fileUrl: uploaded.url, filePath: uploaded.path, fileName: uploaded.filename } : c)));
+      const dataUrl = await fileToDataURL(file);
+      setList(list.map((c) => (c.id === id ? { ...c, fileDataUrl: dataUrl, fileName: file.name } : c)));
     } catch (err) {
-      alert(err?.message || "Upload failed. Please try again.");
+      alert("Upload failed. Please try again.");
     } finally {
       setAttachingId(null);
     }
   }
   function removeFile(id) {
-    const item = list.find((c) => c.id === id);
-    if (item?.filePath) deleteFile(item.filePath);
-    setList(list.map((c) => (c.id === id ? { ...c, fileUrl: null, filePath: null, fileName: null } : c)));
+    setList(list.map((c) => (c.id === id ? { ...c, fileDataUrl: null, fileName: null } : c)));
   }
 
   const inputStyle = { background: C.panelAlt, border: `1px solid ${C.border}`, color: C.text, borderRadius: RADIUS };

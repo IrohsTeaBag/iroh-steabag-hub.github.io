@@ -1,10 +1,8 @@
 import React, { useState, useRef } from "react";
-import { FileText, ChevronRight, Github, Download, Eye, CheckCircle2, X, Cpu, Server, PlayCircle, Trash2, Plus, Upload } from "lucide-react";
+import { FileText, ChevronRight, Github, Download, CheckCircle2, X, Cpu, Server, PlayCircle, Trash2, Plus, Upload } from "lucide-react";
 import { C, RADIUS, MAX_UPLOAD_BYTES } from "../data";
 import { fileToDataURL, useStoredJSON, useProjects } from "../hooks";
 import { StatusPill, PriorityDot, SectionEyebrow, Btn, Panel } from "../ui";
-import DocumentLightbox from "../components/DocumentLightbox";
-import { fileStorageReady, uploadFile, deleteFile, downloadUrl, MAX_FILE_BYTES } from "../fileStorage";
 import { videoUploadReady, generateVideoThumbnail, uploadVideoFile, deleteVideoFile, MAX_VIDEO_BYTES } from "../videoUpload";
 
 export function ProjectThumbnail({ project, ownerMode }) {
@@ -245,22 +243,19 @@ export function ProjectVideos({ project, ownerMode }) {
 
 export function ProjectReport({ project, ownerMode }) {
   const [report, setReport] = useStoredJSON(`report:${project.id}`, null);
-  const [viewing, setViewing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef(null);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_FILE_BYTES) { alert(`That file is too large (max ${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB).`); return; }
-    if (!fileStorageReady()) { alert("Document uploads need the Supabase Storage bucket set up first — see the README."); return; }
+    if (file.size > MAX_UPLOAD_BYTES) { alert("That file is too large. Please use a file under 4MB."); return; }
     setUploading(true);
     try {
-      const uploaded = await uploadFile(file, `reports/${project.id}`);
-      if (report?.path) deleteFile(report.path);
-      setReport({ ...uploaded, uploadedAt: new Date().toLocaleDateString(), createdAt: Date.now() });
+      const dataUrl = await fileToDataURL(file);
+      setReport({ dataUrl, filename: file.name, uploadedAt: new Date().toLocaleDateString(), createdAt: Date.now() });
     } catch (err) {
-      alert(err?.message || "Upload failed. Please try again.");
+      alert("Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -268,31 +263,24 @@ export function ProjectReport({ project, ownerMode }) {
   }
 
   function removeReport() {
-    if (report?.path) deleteFile(report.path);
     setReport(null);
   }
 
   return (
-    <>
-      <div className="flex items-center gap-2 flex-wrap">
-        <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFile} className="hidden" />
-        {report ? (
-          <>
-            <Btn variant="primary" onClick={() => setViewing(true)}><Eye size={12} /> View Report</Btn>
-            <a href={downloadUrl(report.url, report.filename)}><Btn variant="outline"><Download size={12} /> Download</Btn></a>
-          </>
-        ) : (
-          <Btn variant="outline" disabled><FileText size={12} /> Report not yet available</Btn>
-        )}
-        {ownerMode && (
-          <>
-            <Btn variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}><Upload size={12} /> {uploading ? "Uploading…" : report ? "Replace report" : "Upload report"}</Btn>
-            {report && <Btn variant="danger" onClick={removeReport}><Trash2 size={12} /></Btn>}
-          </>
-        )}
-      </div>
-      {viewing && <DocumentLightbox doc={report} onClose={() => setViewing(false)} />}
-    </>
+    <div className="flex items-center gap-2 flex-wrap">
+      <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFile} className="hidden" />
+      {report ? (
+        <a href={report.dataUrl} download={report.filename}><Btn variant="primary"><Download size={12} /> Download Report</Btn></a>
+      ) : (
+        <Btn variant="outline" disabled><FileText size={12} /> Report not yet available</Btn>
+      )}
+      {ownerMode && (
+        <>
+          <Btn variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}><Upload size={12} /> {uploading ? "Uploading…" : report ? "Replace report" : "Upload report"}</Btn>
+          {report && <Btn variant="danger" onClick={removeReport}><Trash2 size={12} /></Btn>}
+        </>
+      )}
+    </div>
   );
 }
 
