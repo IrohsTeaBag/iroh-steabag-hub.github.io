@@ -1,0 +1,16 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl -sS -o /dev/null -w "Supabase responded: %{http_code}\n" \
+            "https://csrctjumjbqrijanmjww.supabase.co/rest/v1/kv_store?select=key&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcmN0anVtamJxcmlqYW5tand3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4NzA1NjEsImV4cCI6MjA5OTQ0NjU2MX0.25tZgWvd-jR4bGme62c3440UnjDenkfU8c9V2cp54yo"
